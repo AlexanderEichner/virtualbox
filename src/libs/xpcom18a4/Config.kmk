@@ -96,6 +96,11 @@ else
  TEMPLATE_XPComDll_DEFS.arm64         = HAVE_VA_LIST_AS_ARRAY HAVE_VA_COPY VA_COPY\(a\,b\)=__builtin_va_copy\(a\,b\)
 endif
 ifdef VBOX_WITH_AUTOMATIC_DEFS_QUOTING
+ TEMPLATE_XPComDll_DEFS.riscv64       = HAVE_VA_LIST_AS_ARRAY HAVE_VA_COPY VA_COPY(a,b)=__builtin_va_copy(a,b)
+else
+ TEMPLATE_XPComDll_DEFS.riscv64       = HAVE_VA_LIST_AS_ARRAY HAVE_VA_COPY VA_COPY\(a\,b\)=__builtin_va_copy\(a\,b\)
+endif
+ifdef VBOX_WITH_AUTOMATIC_DEFS_QUOTING
  TEMPLATE_XPComDll_DEFS.darwin        = XP_UNIX=1 XP_MACOSX=1 TARGET_CARBON=1 HAVE_VISIBILITY_ATTRIBUTE=1 $(TEMPLATE_VBoxR3DllNonPedantic_DEFS.darwin)
 else
  TEMPLATE_XPComDll_DEFS.darwin        = XP_UNIX=1 XP_MACOSX=1 TARGET_CARBON=1 HAVE_VISIBILITY_ATTRIBUTE=1 $(TEMPLATE_VBoxR3DllNonPedantic_DEFS.darwin)
@@ -218,6 +223,7 @@ TEMPLATE_XPComBldProg_DEFS.$(KBUILD_HOST) = $(TEMPLATE_VBoxAdvBldProg_DEFS.$(KBU
 TEMPLATE_XPComBldProg_DEFS.x86            = $(TEMPLATE_VBoxAdvBldProg_DEFS.x86)            $(TEMPLATE_XPComExe_DEFS.x86)
 TEMPLATE_XPComBldProg_DEFS.amd64          = $(TEMPLATE_VBoxAdvBldProg_DEFS.amd64)          $(TEMPLATE_XPComExe_DEFS.amd64)
 TEMPLATE_XPComBldProg_DEFS.arm64          = $(TEMPLATE_VBoxAdvBldProg_DEFS.arm64)          $(TEMPLATE_XPComExe_DEFS.arm64)
+TEMPLATE_XPComBldProg_DEFS.riscv64        = $(TEMPLATE_VBoxAdvBldProg_DEFS.riscv64)        $(TEMPLATE_XPComExe_DEFS.riscv64)
 TEMPLATE_XPComBldProg_CFLAGS             += -std=c99
 TEMPLATE_XPComBldProg_INCS                = \
 	$(VBOX_PATH_SDK)/bindings/xpcom/include \
