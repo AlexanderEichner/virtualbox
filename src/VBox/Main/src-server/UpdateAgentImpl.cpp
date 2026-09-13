@@ -164,6 +164,8 @@ void UpdateAgentBase::i_appendPlatformInfo(Utf8Str &a_rStr)
     a_rStr.append("amd64");
 #elif defined(RT_ARCH_ARM64)
     a_rStr.append("arm64");
+#elif defined(RT_ARCH_RISCV64)
+    a_rStr.append("riscv64");
 #elif defined(RT_ARCH_X86)
     a_rStr.append("x86");
 #else
@@ -211,7 +213,7 @@ void UpdateAgentBase::i_appendPlatformInfo(Utf8Str &a_rStr)
     /* NEM & HM support for the host architecture: */
     BOOL fIsNativeApiSupported = FALSE;
     BOOL fIsHwVirtSupported = FALSE;
-#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
     ComPtr<IHost> ptrHost;
     HRESULT hrc = m_VirtualBox->COMGETTER(Host)(ptrHost.asOutParam());
     if (SUCCEEDED(hrc))
@@ -219,8 +221,10 @@ void UpdateAgentBase::i_appendPlatformInfo(Utf8Str &a_rStr)
 # if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
         ptrHost->IsExecutionEngineSupported(CPUArchitecture_x86, VMExecutionEngine_NativeApi, &fIsNativeApiSupported);
         ptrHost->IsExecutionEngineSupported(CPUArchitecture_x86, VMExecutionEngine_HwVirt, &fIsHwVirtSupported);
-# else
+# elif defined(RT_ARCH_ARM64)
         ptrHost->IsExecutionEngineSupported(CPUArchitecture_ARMv8_64, VMExecutionEngine_NativeApi, &fIsNativeApiSupported);
+# elif defined(RT_ARCH_RISCV64)
+        ptrHost->IsExecutionEngineSupported(CPUArchitecture_RiscV_64, VMExecutionEngine_NativeApi, &fIsNativeApiSupported);
 # endif
     }
 #else

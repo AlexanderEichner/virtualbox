@@ -1110,7 +1110,7 @@
 
   <enum
     name="PlatformArchitecture"
-    uuid="36e21926-1713-413d-8cf5-2f169b2cbcf3"
+    uuid="b6836188-9921-419f-81db-63bced1cd369"
     >
     <desc>
       Platform architecture.
@@ -1133,11 +1133,17 @@
         Valid CPUArchitecture choices: <link to="CPUArchitecture_ARMv8_32"/>, <link to="CPUArchitecture_ARMv8_64"/>
       </desc>
     </const>
+    <const name="RISCV"  value="3">
+      <desc>
+        RISC-V-based platform (RV32, RV64).
+        Valid CPUArchitecture choices: <link to="CPUArchitecture_RiscV_32"/>, <link to="CPUArchitecture_RiscV_64"/>
+      </desc>
+    </const>
   </enum>
 
   <enum
     name="CPUArchitecture"
-    uuid="12906c63-9967-49c8-ba5a-6521adaf0185"
+    uuid="160c2f57-65f3-4233-b2d4-53f1df87386c"
     >
     <desc>Basic CPU architecture types.</desc>
     <const name="Any"                 value="0">
@@ -1154,6 +1160,12 @@
     </const>
     <const name="ARMv8_64"            value="4">
       <desc>64-bit only ARMv8. (Also known as AArch64 or ARM64.)</desc>
+    </const>
+    <const name="RiscV_32"            value="5">
+      <desc>32-bit only RISC-V. (Also known as RV32 or RISCV32.)</desc>
+    </const>
+    <const name="RiscV_64"            value="6">
+      <desc>64-bit only RISC-V. (Also known as RV64 or RISCV64.)</desc>
     </const>
   </enum>
 

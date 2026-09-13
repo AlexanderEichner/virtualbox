@@ -4113,6 +4113,8 @@ PlatformArchitecture_T Host::s_getPlatformArchitecture()
     return PlatformArchitecture_x86;
 #elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
     return PlatformArchitecture_ARM;
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    return PlatformArchitecture_RISCV;
 #else
 # error "Port me!"
     return PlatformArchitecture_None;

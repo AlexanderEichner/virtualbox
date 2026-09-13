@@ -3121,11 +3121,11 @@ HRESULT Machine::launchVMProcess(const ComPtr<ISession> &aSession,
         {
             case PlatformArchitecture_x86:
 #if !defined(RT_ARCH_AMD64)
-# if !defined(VBOX_WITH_X86_ON_ARM_ENABLED)
+# if !defined(VBOX_WITH_X86_ENABLED)
                 {
-                    Bstr bstrEnableX86OnArm;
-                    hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableX86OnArm").raw(), bstrEnableX86OnArm.asOutParam());
-                    if (SUCCEEDED(hrc) && bstrEnableX86OnArm.equals("1"))
+                    Bstr bstrEnableX86;
+                    hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableX86").raw(), bstrEnableX86.asOutParam());
+                    if (SUCCEEDED(hrc) && bstrEnableX86.equals("1"))
                         break;
                 }
                 return setError(VBOX_E_PLATFORM_ARCH_NOT_SUPPORTED,
@@ -3138,11 +3138,11 @@ HRESULT Machine::launchVMProcess(const ComPtr<ISession> &aSession,
 
             case PlatformArchitecture_ARM:
 #if !defined(RT_ARCH_ARM64)
-# if !defined(VBOX_WITH_ARM_ON_X86_ENABLED)
+# if !defined(VBOX_WITH_ARM_ENABLED)
                 {
-                    Bstr bstrEnableArmOnX86;
-                    hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableArmOnX86").raw(), bstrEnableArmOnX86.asOutParam());
-                    if (SUCCEEDED(hrc) && bstrEnableArmOnX86.equals("1"))
+                    Bstr bstrEnableArm;
+                    hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableArm").raw(), bstrEnableArm.asOutParam());
+                    if (SUCCEEDED(hrc) && bstrEnableArm.equals("1"))
                         break;
                 }
                 return setError(VBOX_E_PLATFORM_ARCH_NOT_SUPPORTED,
@@ -15524,9 +15524,14 @@ HRESULT Machine::applyDefaults(const com::Utf8Str &aFlags)
     AutoCaller autoCaller(this);
     AssertComRCReturn(autoCaller.hrc(),autoCaller.hrc());
 
+    Bstr bstrSkip2023CertsAndDbx;
+    HRESULT hrc = mParent->GetExtraData(Bstr("VBoxInternal2/Skip2023CertsAndDbx").raw(), bstrSkip2023CertsAndDbx.asOutParam());
+    if (SUCCEEDED(hrc) && bstrSkip2023CertsAndDbx.equals("1"))
+        setExtraData("VBoxInternal2/Skip2023CertsAndDbx", "1");
+
     /* get usb device filters from host, before any writes occurred to avoid deadlock */
     ComPtr<IUSBDeviceFilters> usbDeviceFilters;
-    HRESULT hrc = getUSBDeviceFilters(usbDeviceFilters);
+    hrc = getUSBDeviceFilters(usbDeviceFilters);
     if (FAILED(hrc)) return hrc;
 
     NOREF(aFlags);

@@ -4398,4 +4398,48 @@ int Clipboard::i_changeFileTransferMode(bool fEnabled)
     return vrc;
 }
 # endif /* VBOX_WITH_SHARED_CLIPBOARD_TRANSFERS */
+
+#else
+
+HRESULT Clipboard::i_registerSession(VBOXSHCLMAINCLIENTID aClientId,
+                                     ClipboardSession *aSession,
+                                     uint32_t fFlags,
+                                     const ComPtr<IEventSource> &aEventSource)
+{
+    RT_NOREF(aClientId, aSession, fFlags, aEventSource);
+    ReturnComNotImplemented();
+}
+
+
+void Clipboard::i_unregisterSession(VBOXSHCLMAINCLIENTID aClientId)
+{
+    RT_NOREF(aClientId);
+}
+
+
+HRESULT Clipboard::i_fireSessionInitialState(VBOXSHCLMAINCLIENTID aClientId)
+{
+    RT_NOREF(aClientId);
+    ReturnComNotImplemented();
+}
+
+
+HRESULT Clipboard::requestData(const com::Utf8Str &aMimeType, ULONG *aRequestId)
+{
+    RT_NOREF(aMimeType, aRequestId);
+    ReturnComNotImplemented();
+}
+
+
+HRESULT Clipboard::setTransferStatus(ULONG aServiceSessionId,
+                                     ULONG aTransferId,
+                                     LONG64 aGeneration,
+                                     ClipboardSource_T aSource,
+                                     ULONG aStatus,
+                                     LONG aResult)
+{
+    RT_NOREF(aServiceSessionId, aTransferId, aGeneration, aSource, aStatus, aResult);
+    ReturnComNotImplemented();
+}
+
 #endif /* VBOX_WITH_SHARED_CLIPBOARD */

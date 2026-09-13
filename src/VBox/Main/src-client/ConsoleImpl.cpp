@@ -622,15 +622,15 @@ HRESULT Console::initWithMachine(IMachine *aMachine, IInternalMachineControl *aC
     switch (platformArch)
     {
         case PlatformArchitecture_x86:
-#if !defined(RT_ARCH_AMD64) && !defined(VBOX_WITH_X86_ON_ARM_ENABLED)
+#if !defined(RT_ARCH_AMD64) && !defined(VBOX_WITH_X86_ENABLED)
             {
                 ComPtr<IVirtualBox> pVirtualBox;
                 hrc = mMachine->COMGETTER(Parent)(pVirtualBox.asOutParam());
                 if (SUCCEEDED(hrc))
                 {
-                    Bstr bstrEnableX86OnArm;
-                    hrc = pVirtualBox->GetExtraData(Bstr("VBoxInternal2/EnableX86OnArm").raw(), bstrEnableX86OnArm.asOutParam());
-                    if (FAILED(hrc) || !bstrEnableX86OnArm.equals("1"))
+                    Bstr bstrEnableX86;
+                    hrc = pVirtualBox->GetExtraData(Bstr("VBoxInternal2/EnableX86").raw(), bstrEnableX86.asOutParam());
+                    if (FAILED(hrc) || !bstrEnableX86.equals("1"))
                     {
                         hrc = setError(VBOX_E_PLATFORM_ARCH_NOT_SUPPORTED,
                                        tr("Cannot run the machine because its platform architecture %s is not supported on %s"),
@@ -645,15 +645,15 @@ HRESULT Console::initWithMachine(IMachine *aMachine, IInternalMachineControl *aC
             break;
 #ifdef VBOX_WITH_VIRT_ARMV8
         case PlatformArchitecture_ARM:
-#if !defined(RT_ARCH_ARM64) && !defined(VBOX_WITH_ARM_ON_X86_ENABLED)
+#if !defined(RT_ARCH_ARM64) && !defined(VBOX_WITH_ARM_ENABLED)
             {
                 ComPtr<IVirtualBox> pVirtualBox;
                 hrc = mMachine->COMGETTER(Parent)(pVirtualBox.asOutParam());
                 if (SUCCEEDED(hrc))
                 {
-                    Bstr bstrEnableArmOnX86;
-                    hrc = pVirtualBox->GetExtraData(Bstr("VBoxInternal2/EnableArmOnX86").raw(), bstrEnableArmOnX86.asOutParam());
-                    if (FAILED(hrc) || !bstrEnableArmOnX86.equals("1"))
+                    Bstr bstrEnableArm;
+                    hrc = pVirtualBox->GetExtraData(Bstr("VBoxInternal2/EnableArm").raw(), bstrEnableArm.asOutParam());
+                    if (FAILED(hrc) || !bstrEnableArm.equals("1"))
                     {
                         hrc = setError(VBOX_E_PLATFORM_ARCH_NOT_SUPPORTED,
                                        tr("Cannot run the machine because its platform architecture %s is not supported on %s"),

@@ -133,6 +133,8 @@ PlatformArchitecture_T PlatformProperties::s_getHostPlatformArchitecture()
     return PlatformArchitecture_x86;
 #elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
     return PlatformArchitecture_ARM;
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    return PlatformArchitecture_RISCV;
 #else
 # error "Port me!"
     return PlatformArchitecture_None;
@@ -847,6 +849,7 @@ int PlatformProperties::s_getSupportedGraphicsControllerFeatures(PlatformArchite
     {
         case PlatformArchitecture_x86:
         case PlatformArchitecture_ARM:
+        case PlatformArchitecture_RISCV:
         {
             switch (enmController)
             {
@@ -1317,6 +1320,7 @@ HRESULT PlatformProperties::getMinGuestRAM(FirmwareType_T aFirmware, ULONG *aMin
             break;
 
         case PlatformArchitecture_ARM:
+        case PlatformArchitecture_RISCV:
             switch (aFirmware)
             {
                 case FirmwareType_EFI32: /** @todo possibly lower, but we don't really support 32-bit arm at the moment. */
