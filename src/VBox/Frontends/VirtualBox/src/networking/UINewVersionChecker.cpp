@@ -191,6 +191,8 @@ QString UINewVersionChecker::platformInfo()
     strPlatform.append("arm64");
 #elif defined(RT_ARCH_X86)
     strPlatform.append("x86");
+#elif defined(RT_ARCH_RISCV64)
+    strPlatform.append("riscv64");
 #else
 # error "Unexpected RT_ARCH_XXX"
 #endif
@@ -236,15 +238,18 @@ QString UINewVersionChecker::platformInfo()
     /* NEM & HM support for the host architecture: */
     bool fIsNativeApiSupported = false;
     bool fIsHwVirtSupported = false;
-# if defined(RT_ARCH_ARM64) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
+# if defined(RT_ARCH_ARM64) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) || defined(RT_ARCH_RISCV64)
     CHost comHost = gpGlobalSession->host();
 #  if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
     fIsNativeApiSupported = comHost.IsExecutionEngineSupported(KCPUArchitecture_x86, KVMExecutionEngine_NativeApi) != FALSE
                          && comHost.isOk();
     fIsHwVirtSupported    = comHost.IsExecutionEngineSupported(KCPUArchitecture_x86, KVMExecutionEngine_HwVirt) != FALSE
                          && comHost.isOk();
-#  else
+#  elif defined(RT_ARCH_ARM64)
     fIsNativeApiSupported = comHost.IsExecutionEngineSupported(KCPUArchitecture_ARMv8_64, KVMExecutionEngine_NativeApi) != FALSE
+                         && comHost.isOk();
+#  else
+    fIsNativeApiSupported = comHost.IsExecutionEngineSupported(KCPUArchitecture_RiscV_64, KVMExecutionEngine_NativeApi) != FALSE
                          && comHost.isOk();
 #  endif
 # else
