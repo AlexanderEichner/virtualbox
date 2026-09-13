@@ -320,7 +320,7 @@ ifeq ($(KBUILD_TARGET),win)
  TEMPLATE_LibCrypto_DEFS += \
  	NOCRYPT
 endif
-if1of ($(KBUILD_TARGET_ARCH), x86 amd64 arm64)
+if1of ($(KBUILD_TARGET_ARCH), x86 amd64 arm64 riscv64)
  TEMPLATE_LibCrypto_DEFS += \
  	L_ENDIAN
 else
