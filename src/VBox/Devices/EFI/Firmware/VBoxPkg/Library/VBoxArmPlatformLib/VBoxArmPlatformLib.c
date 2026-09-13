@@ -39,11 +39,11 @@
 *   Header Files                                                                                                                 *
 *********************************************************************************************************************************/
 #include <Base.h>
-#include <Library/ArmLib.h>
+#include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 
-#define IN_RING0
+#define IN_RING3
 #include <VBox/platforms/vbox-armv8.h>
 
 EFI_PHYSICAL_ADDRESS EFIAPI VBoxArmPlatformDescGetPhysAddr (VOID)
