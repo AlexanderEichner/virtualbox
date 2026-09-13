@@ -1681,6 +1681,8 @@ static HRESULT displayCPUProfile(ICPUProfile *pProfile, size_t idx, int cchIdx, 
         case CPUArchitecture_AMD64:    pszArchitecture = "AMD64"; break;
         case CPUArchitecture_ARMv8_32: pszArchitecture = "ARMv8 (32-bit only)"; break;
         case CPUArchitecture_ARMv8_64: pszArchitecture = "ARMv8 (64-bit)"; break;
+        case CPUArchitecture_RiscV_32: pszArchitecture = "RISC-V (RV32I / 32-bit only)"; break;
+        case CPUArchitecture_RiscV_64: pszArchitecture = "RISC-V (RV64I / 64-bit)"; break;
 #ifdef VBOX_WITH_XPCOM_CPP_ENUM_HACK
         case CPUArchitecture_32BitHack:
 #endif
@@ -2148,6 +2150,8 @@ static HRESULT listExecutionEnginesForCpuArchitecture(CPUArchitecture_T enmCpuAr
         case CPUArchitecture_AMD64:    pszArchitecture = "AMD64"; break;
         case CPUArchitecture_ARMv8_32: pszArchitecture = "ARMv8 (32-bit only)"; break;
         case CPUArchitecture_ARMv8_64: pszArchitecture = "ARMv8 (64-bit)"; break;
+        case CPUArchitecture_RiscV_32: pszArchitecture = "RISC-V (RV32I / 32-bit only)"; break;
+        case CPUArchitecture_RiscV_64: pszArchitecture = "RISC-V (RV64I / 64-bit)"; break;
 #ifdef VBOX_WITH_XPCOM_CPP_ENUM_HACK
         case CPUArchitecture_32BitHack:
 #endif
@@ -2214,6 +2218,8 @@ static HRESULT listExecutionEngines(const ComPtr<IVirtualBox> &ptrVirtualBox)
             hrc = listExecutionEnginesForCpuArchitecture(CPUArchitecture_AMD64,    ptrSysProps, pHost, hrc);
             hrc = listExecutionEnginesForCpuArchitecture(CPUArchitecture_ARMv8_32, ptrSysProps, pHost, hrc);
             hrc = listExecutionEnginesForCpuArchitecture(CPUArchitecture_ARMv8_64, ptrSysProps, pHost, hrc);
+            hrc = listExecutionEnginesForCpuArchitecture(CPUArchitecture_RiscV_32, ptrSysProps, pHost, hrc);
+            hrc = listExecutionEnginesForCpuArchitecture(CPUArchitecture_RiscV_64, ptrSysProps, pHost, hrc);
 
     return hrc;
 }

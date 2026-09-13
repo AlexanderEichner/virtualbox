@@ -357,6 +357,8 @@ RTEXITCODE handleCreateVM(HandlerArg *a)
                     platformArch = PlatformArchitecture_x86;
                 else if (!RTStrICmp(ValueUnion.psz, "arm"))
                     platformArch = PlatformArchitecture_ARM;
+                else if (!RTStrICmp(ValueUnion.psz, "riscv"))
+                    platformArch = PlatformArchitecture_RISCV;
                 else
                     return errorArgument(Misc::tr("Invalid --platform-architecture argument '%s'"), ValueUnion.psz);
                 break;

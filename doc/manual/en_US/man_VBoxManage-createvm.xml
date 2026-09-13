@@ -53,6 +53,7 @@
       <arg choice="req">--platform-architecture=<group choice="plain">
         <arg choice="plain">x86</arg>
         <arg choice="plain">arm</arg>
+        <arg choice="plain">riscv</arg>
       </group></arg>
       <arg>--basefolder=<replaceable>basefolder</replaceable></arg>
       <arg>--default</arg>
