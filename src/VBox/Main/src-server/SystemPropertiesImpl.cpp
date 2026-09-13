@@ -1051,6 +1051,15 @@ HRESULT SystemProperties::getSupportedPlatformArchitectures(std::vector<Platform
 # ifdef VBOX_WITH_VIRT_ARMV8
         , PlatformArchitecture_ARM
 # endif
+#elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+        /* Currently RISC-V can run x86 emulation and if enabled RISC-V VMs. */
+        PlatformArchitecture_x86
+# ifdef VBOX_WITH_VIRT_ARMV8
+        , PlatformArchitecture_ARM
+# endif
+# ifdef VBOX_WITH_VIRT_RISCV
+        , PlatformArchitecture_RiscV
+# endif
 #else
 # error "Port me!"
         PlatformArchitecture_None
@@ -1058,9 +1067,10 @@ HRESULT SystemProperties::getSupportedPlatformArchitectures(std::vector<Platform
     };
     RT_CPP_VECTOR_ASSIGN_ARRAY(aSupportedPlatformArchitectures, s_aPlatformArchitectures);
 
-#if !defined(RT_ARCH_AMD64) && !defined(VBOX_WITH_X86_ON_ARM_ENABLED)
+    HRESULT hrc;
+#if !defined(RT_ARCH_AMD64) && !defined(VBOX_WITH_X86_ENABLED)
     Bstr bstrEnableX86OnArm;
-    HRESULT hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableX86OnArm").raw(), bstrEnableX86OnArm.asOutParam());
+    hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableX86").raw(), bstrEnableX86OnArm.asOutParam());
     if (FAILED(hrc) || !bstrEnableX86OnArm.equals("1"))
     {
         Assert(aSupportedPlatformArchitectures[0] == PlatformArchitecture_x86);
@@ -1068,9 +1078,9 @@ HRESULT SystemProperties::getSupportedPlatformArchitectures(std::vector<Platform
             aSupportedPlatformArchitectures.erase(aSupportedPlatformArchitectures.begin());
     }
 #endif
-#if !defined(RT_ARCH_ARM64) && defined(VBOX_WITH_VIRT_ARMV8) && !defined(VBOX_WITH_ARM_ON_X86_ENABLED)
+#if !defined(RT_ARCH_ARM64) && defined(VBOX_WITH_VIRT_ARMV8) && !defined(VBOX_WITH_ARM_ENABLED)
     Bstr bstrEnableArmOnX86;
-    HRESULT hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableArmOnX86").raw(), bstrEnableArmOnX86.asOutParam());
+    hrc = mParent->GetExtraData(Bstr("VBoxInternal2/EnableArm").raw(), bstrEnableArmOnX86.asOutParam());
     if (FAILED(hrc) || !bstrEnableArmOnX86.equals("1"))
     {
         Assert(aSupportedPlatformArchitectures[1] == PlatformArchitecture_ARM);

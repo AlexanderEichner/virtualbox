@@ -133,6 +133,8 @@ static void tstApiIVirtualBox(IVirtualBox *pVBox)
     enmPlatformArch = PlatformArchitecture_x86;
 #elif defined(RT_ARCH_ARM32) || defined(RT_ARCH_ARM64)
     enmPlatformArch = PlatformArchitecture_ARM;
+#elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    enmPlatformArch = PlatformArchitecture_RISCV;
 #else
 # error "Port me!"
 #endif
