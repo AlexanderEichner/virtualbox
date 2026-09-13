@@ -4,6 +4,7 @@
 #
 
 #
+# Copyright (C) 2026 Alexander Eichner <github@aeichner.de>.
 # Copyright (C) 2006-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
@@ -862,14 +863,24 @@ if !defined(VBOX_ONLY_EXTPACKS) && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SU
  if defined(VBOX_WITH_VIRT_ARMV8)
   VBoxDD_DEFS       += VBOX_WITH_VIRT_ARMV8
   VBoxDD_SOURCES    += \
+  	Gpio/DevPL061.cpp \
+  	Misc/DevPL031.cpp \
+  	Serial/DevPL011.cpp
+ endif
+
+ # --- RISC-V bits. ---
+ if defined(VBOX_WITH_VIRT_RISCV)
+  VBoxDD_DEFS       += VBOX_WITH_VIRT_RISCV
+ endif
+
+ # --- Common ARMv8 and RISC-V bits. ---
+ if defined(VBOX_WITH_VIRT_ARMV8) || defined(VBOX_WITH_VIRT_RISCV)
+  VBoxDD_SOURCES    += \
   	Bus/DevPciGenericEcam.cpp \
   	EFI/DevEFI-armv8.cpp \
-  	Gpio/DevPL061.cpp \
   	Gpio/DrvGpioButton.cpp \
   	Misc/DevFlashCFI.cpp \
-  	Misc/DevPL031.cpp \
-  	Misc/DevPlatform.cpp \
-  	Serial/DevPL011.cpp
+  	Misc/DevPlatform.cpp
  endif
 
  # --- Final bits, mostly libraries for order dependant linkers. ---
@@ -1119,7 +1130,8 @@ if !defined(VBOX_ONLY_EXTPACKS) && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SU
    	$(PATH_STAGE)/$(INST_BIN)VBoxEFI-arm64.fd
   endif
 
-  VBoxDD2_SOURCES.arm64 += EFI/DevEFI-binaries.S
+  VBoxDD2_SOURCES.arm64   += EFI/DevEFI-binaries.S
+  VBoxDD2_SOURCES.riscv64 += EFI/DevEFI-binaries.S
   EFI/DevEFI-binaries.S_ASINCS = $(PATH_STAGE)/$(INST_BIN)
   EFI/DevEFI-binaries.S_DEPS   = \
   	$(PATH_STAGE)/$(INST_BIN)VBoxEFI-x86.fd \
@@ -1128,6 +1140,10 @@ if !defined(VBOX_ONLY_EXTPACKS) && "$(intersects $(KBUILD_TARGET_ARCH),$(VBOX_SU
    EFI/DevEFI-binaries.S_DEPS   += \
    	$(PATH_STAGE)/$(INST_BIN)VBoxEFI-arm32.fd \
    	$(PATH_STAGE)/$(INST_BIN)VBoxEFI-arm64.fd
+  endif
+  ifdef VBOX_WITH_VIRT_RISCV
+   EFI/DevEFI-binaries.S_DEPS   += \
+   	$(PATH_STAGE)/$(INST_BIN)VBoxEFI-riscv64.fd
   endif
  endif
 

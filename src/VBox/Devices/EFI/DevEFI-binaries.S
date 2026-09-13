@@ -131,3 +131,29 @@ NAME(g_cbEfiFirmwareArm64):
 
 # endif
 #endif /*VBOX_WITH_VIRT_ARMV8 */
+
+
+#ifdef VBOX_WITH_VIRT_RISCV
+/*
+ * The RISC-V bits
+ */
+
+/* 64-bit firmware: */
+.p2align 6
+.globl NAME(g_abEfiFirmwareRiscv64)
+NAME(g_abEfiFirmwareRiscv64):
+        .incbin "VBoxEFI-riscv64.fd"
+end_riscv64_firmware:
+
+.p2align 2
+.globl NAME(g_cbEfiFirmwareRiscv64)
+NAME(g_cbEfiFirmwareRiscv64):
+        .long  end_riscv64_firmware - NAME(g_abEfiFirmwareRiscv64)
+
+# ifdef ASM_FORMAT_ELF
+.size g_abEfiFirmwareRiscv64, end_riscv64_firmware - NAME(g_abEfiFirmwareRiscv64)
+.type g_abEfiFirmwareRiscv64 object
+.size g_cbEfiFirmwareRiscv64, 4
+.type g_cbEfiFirmwareRiscv64 object
+# endif
+#endif /*VBOX_WITH_VIRT_RISCV */
