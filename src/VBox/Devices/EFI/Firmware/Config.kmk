@@ -80,8 +80,9 @@ else
  VBOX_EFI_TOOL_CHAIN.amd64 := GCC48
 endif
 
-VBOX_EFI_TOOL_CHAIN.arm32 := CLANGDWARF
-VBOX_EFI_TOOL_CHAIN.arm64 := CLANGDWARF
+VBOX_EFI_TOOL_CHAIN.arm32   := CLANGDWARF
+VBOX_EFI_TOOL_CHAIN.arm64   := CLANGDWARF
+VBOX_EFI_TOOL_CHAIN.riscv64 := CLANGDWARF
 
 
 #
@@ -141,6 +142,9 @@ TEMPLATE_VBoxEfiBldProg_CFLAGS.linux += -std=gnu11                     # Newer g
 TEMPLATE_VBoxEfiBldProg_CFLAGS.linux += -Wno-misleading-indentation
 TEMPLATE_VBoxEfiBldProg_CFLAGS.linux += -Wno-error=stringop-truncation # VfrCompile/Pccts/antlr/mrhoist.c:2216:5: error: 'strncpy' specified bound 50 equals destination size
 
+TEMPLATE_VBoxEfiBldProg_CXXFLAGS.linux.riscv64  = $(TEMPLATE_VBoxBldProg_CXXFLAGS.linux.riscv64)
+TEMPLATE_VBoxEfiBldProg_CXXFLAGS.linux.riscv64 += -Wno-register # BaseTools/Source/C/VfrCompile/Pccts/h/AParser.cpp:475:2: error: ISO C++17 does not allow 'register' storage class specifier [-Wregister]
+
 TEMPLATE_VBoxEfiBldProg_CXXFLAGS.darwin.arm64  = $(TEMPLATE_VBoxBldProg_CXXFLAGS.darwin.arm64)
 TEMPLATE_VBoxEfiBldProg_CXXFLAGS.darwin.arm64 += -Wno-register # BaseTools/Source/C/VfrCompile/Pccts/h/AParser.cpp:475:2: error: ISO C++17 does not allow 'register' storage class specifier [-Wregister]
 TEMPLATE_VBoxEfiBldProg_CXXFLAGS.darwin.arm64 += -Wno-deprecated-declarations # out/darwin.arm64/debug/obj/VfrCompile/VfrSyntax.cpp:11241:3: error: 'sprintf' is deprecated: This function is provided for compatibility reasons only
@@ -162,6 +166,9 @@ TEMPLATE_VBoxEfiBldProg_INCS.arm = $(TEMPLATE_VBoxBldProg_INCS.arm) \
 
 TEMPLATE_VBoxEfiBldProg_INCS.arm64 = $(TEMPLATE_VBoxBldProg_INCS.arm64) \
 	$(VBOX_PATH_EFI_FIRMWARE)/MdePkg/Include/AArch64
+
+TEMPLATE_VBoxEfiBldProg_INCS.riscv64 = $(TEMPLATE_VBoxBldProg_INCS.riscv64) \
+	$(VBOX_PATH_EFI_FIRMWARE)/MdePkg/Include/RiscV64
 
 TEMPLATE_VBoxEfiBldProg_LATE_LIBS = \
 	$(VBOX_PATH_STAGE_EFI_BLDPROGS)/EfiBldCommonLib$(VBOX_SUFF_LIB) \
@@ -209,5 +216,6 @@ if1of ($(VBOX_EFI_TOOL_CHAIN.arm64), VS2017 VS2019 VS2022 CLANGPDB)
 else
  VBOX_EFI_DBG_SUFF.arm64 := .debug
 endif
+VBOX_EFI_DBG_SUFF.riscv64 := .debug
 
 include $(VBOX_PATH_EFI_FIRMWARE)/EfiModules.kmk

@@ -7,6 +7,7 @@
 #
 
 #
+# Copyright (C) 2026 Alexander Eichner <github@aeichner.de>.
 # Copyright (C) 2013-2026 Oracle and/or its affiliates.
 #
 # This file is part of VirtualBox base platform packages, as
@@ -119,7 +120,8 @@ VBoxEfiFirmware_SOURCES = \
 	$(VBoxEfiFirmware_0_OUTDIR)/x86/$(call VBOX_EFI_OUTPUT_SUBDIR,x86)/FV/OVMF.fd=>VBoxEFI-x86.fd \
 	$(VBoxEfiFirmware_0_OUTDIR)/amd64/$(call VBOX_EFI_OUTPUT_SUBDIR,amd64)/FV/OVMF.fd=>VBoxEFI-amd64.fd \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm32/$(call VBOX_EFI_OUTPUT_SUBDIR,arm32)/FV/QEMU_EFI.fd=>VBoxEFI-arm32.fd \
-	$(VBoxEfiFirmware_0_OUTDIR)/arm64/$(call VBOX_EFI_OUTPUT_SUBDIR,arm64)/FV/QEMU_EFI.fd=>VBoxEFI-arm64.fd
+	$(VBoxEfiFirmware_0_OUTDIR)/arm64/$(call VBOX_EFI_OUTPUT_SUBDIR,arm64)/FV/QEMU_EFI.fd=>VBoxEFI-arm64.fd \
+	$(VBoxEfiFirmware_0_OUTDIR)/riscv64/$(call VBOX_EFI_OUTPUT_SUBDIR,riscv64)/FV/RISCV_VIRT_CODE.fd=>VBoxEFI-riscv64.fd
 VBoxEfiFirmware_BLDDIRS = \
 	$(VBoxEfiFirmware_0_OUTDIR)/x86/ \
 	$(VBoxEfiFirmware_0_OUTDIR)/x86/Conf/ \
@@ -128,7 +130,9 @@ VBoxEfiFirmware_BLDDIRS = \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm32/ \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm32/Conf/ \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm64/ \
-	$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/
+	$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/ \
+	$(VBoxEfiFirmware_0_OUTDIR)/riscv64/ \
+	$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/
 VBoxEfiFirmware_CLEAN = \
 	$(VBoxEfiFirmware_0_OUTDIR)/x86/Conf/target.txt \
 	$(VBoxEfiFirmware_0_OUTDIR)/x86/Conf/build_rule.txt \
@@ -141,7 +145,9 @@ VBoxEfiFirmware_CLEAN = \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm32/Conf/tools_def.txt \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/target.txt \
 	$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/build_rule.txt \
-	$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/tools_def.txt
+	$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/tools_def.txt \
+	$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/build_rule.txt \
+	$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/tools_def.txt
 
 # Install the debug info.
 INSTALLS += VBoxEfiFirmwareDbg32
@@ -188,6 +194,12 @@ else
  	$(foreach mod,$(VBOX_EFI_MODULES_FLAT.arm64),$(VBoxEfiFirmware_0_OUTDIR)/arm64/$(call VBOX_EFI_OUTPUT_SUBDIR,arm64)/AARCH64/$(mod).debug)
 endif
 
+INSTALLS += VBoxEfiFirmwareDbgRiscv64
+VBoxEfiFirmwareDbgRiscv64_INST = $(INST_VBOXDBG_SYMS)riscv64/
+VBoxEfiFirmwareDbgRiscv64_MODE = 0644
+VBoxEfiFirmwareDbgRiscv64_SOURCES = \
+	$(foreach mod,$(VBOX_EFI_MODULES_FLAT.riscv64),$(VBoxEfiFirmware_0_OUTDIR)/riscv64/$(call VBOX_EFI_OUTPUT_SUBDIR,riscv64)/RISCV64/$(mod).debug)
+
 
 #
 # Install a custom clean up rule for dealing with the EFI build system output.
@@ -199,7 +211,8 @@ VBoxEfiFirmwareCleanup:
 		"$(VBoxEfiFirmware_0_OUTDIR)/x86/" \
 		"$(VBoxEfiFirmware_0_OUTDIR)/amd64/" \
 		"$(VBoxEfiFirmware_0_OUTDIR)/arm32/" \
-		"$(VBoxEfiFirmware_0_OUTDIR)/arm64/"
+		"$(VBoxEfiFirmware_0_OUTDIR)/arm64/" \
+		"$(VBoxEfiFirmware_0_OUTDIR)/riscv64/"
 .PHONY: VBoxEfiFirmwareCleanup
 
 
@@ -346,7 +359,8 @@ endif
 $(VBoxEfiFirmware_0_OUTDIR)/x86/Conf/tools_def.txt \
 $(VBoxEfiFirmware_0_OUTDIR)/amd64/Conf/tools_def.txt \
 $(VBoxEfiFirmware_0_OUTDIR)/arm32/Conf/tools_def.txt \
-$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/tools_def.txt: \
+$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/tools_def.txt \
+$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/tools_def.txt: \
 		$(VBOX_PATH_EFI_FIRMWARE)/vbox-tools_def.txt \
 		$(MAKEFILE) \
 		$(VBOX_RTIASL) | $$(dir $$@)
@@ -381,7 +395,8 @@ $(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/tools_def.txt: \
 $(VBoxEfiFirmware_0_OUTDIR)/x86/Conf/build_rule.txt \
 $(VBoxEfiFirmware_0_OUTDIR)/amd64/Conf/build_rule.txt \
 $(VBoxEfiFirmware_0_OUTDIR)/arm32/Conf/build_rule.txt \
-$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/build_rule.txt: \
+$(VBoxEfiFirmware_0_OUTDIR)/arm64/Conf/build_rule.txt \
+$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/build_rule.txt: \
 		$(VBOX_PATH_EFI_FIRMWARE)/BaseTools/Conf/build_rule.template \
 		$(MAKEFILE) | $$(dir $$@)
 	$(RM) -f -- "$@"
@@ -514,6 +529,37 @@ $(VBoxEfiFirmware_0_OUTDIR)/arm64/$(call VBOX_EFI_OUTPUT_SUBDIR,arm64)/FV/QEMU_E
 		--arch AARCH64 \
 		--platform ArmVirtPkg/ArmVirtQemu.dsc
 
+#
+# VBoxEFI-arm64
+#
+$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/target.txt: $(MAKEFILE) | $$(dir $$@) $(VBOX_EFI_BLDPROGS)
+	$(APPEND) -tn "$@" \
+		"# Automatically generated, do not edit" \
+		"" \
+		"# These variables cannot be overriden by the build.py command line." \
+		"TOOL_CHAIN_CONF = $(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/tools_def.txt" \
+		"BUILD_RULE_CONF = $(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/build_rule.txt" \
+		"" \
+		"# These variables are overridden and this is just for show." \
+		"ACTIVE_PLATFORM = OvmfPkg/RiscVVirt/RiscVVirtQemu.dsc" \
+		"TARGET          = $(VBOX_EFI_BUILD_TARGET)" \
+		"TARGET_ARCH     = RISCV64" \
+		"TOOL_CHAIN_TAG  = $(VBOX_EFI_TOOL_CHAIN.riscv64)" \
+		"MAX_CONCURRENT_THREAD_NUMBER = $(VBOX_EFI_MAX_THREADS)"
+
+$(VBoxEfiFirmware_0_OUTDIR)/riscv64/$(call VBOX_EFI_OUTPUT_SUBDIR,riscv64)/FV/RISCV_VIRT_CODE.fd \
++ $(VBoxEfiFirmwareDbgArm64_SOURCES): \
+		$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/target.txt \
+		$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/tools_def.txt \
+		$(VBoxEfiFirmware_0_OUTDIR)/riscv64/Conf/build_rule.txt \
+		$(VBOX_EFI_DEPENDENCIES) \
+		$(VBOX_PATH_EFI_FIRMWARE)/OvmfPkg/RiscVVirt/RiscVVirtQemu.dsc \
+		$(VBOX_PATH_EFI_FIRMWARE)/OvmfPkg/RiscVVirt/RiscVVirtQemu.fdf
+	+ $(VBOX_EFI_BUILD_CMD) \
+		--tagname $(VBOX_EFI_TOOL_CHAIN.riscv64) \
+		--arch RISCV64 \
+		--platform OvmfPkg/RiscVVirt/RiscVVirtQemu.dsc
+
 
 #
 # Some aliases.
@@ -522,4 +568,5 @@ build-efi-x86: $$(filter   %VBoxEFI-x86.fd  ,$$(VBoxEfiFirmware_2_STAGE_TARGETS)
 build-efi-amd64: $$(filter %VBoxEFI-amd64.fd,$$(VBoxEfiFirmware_2_STAGE_TARGETS))
 build-efi-arm32: $$(filter %VBoxEFI-arm32.fd,$$(VBoxEfiFirmware_2_STAGE_TARGETS))
 build-efi-arm64: $$(filter %VBoxEFI-arm64.fd,$$(VBoxEfiFirmware_2_STAGE_TARGETS))
+build-efi-riscv64: $$(filter %VBoxEFI-riscv64.fd,$$(VBoxEfiFirmware_2_STAGE_TARGETS))
 

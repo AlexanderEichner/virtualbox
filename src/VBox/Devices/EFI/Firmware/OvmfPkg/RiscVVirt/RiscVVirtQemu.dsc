@@ -18,7 +18,11 @@
   PLATFORM_GUID                  = 39DADB39-1B21-4867-838E-830B6149B9E0
   PLATFORM_VERSION               = 0.1
   DSC_SPECIFICATION              = 0x0001001c
+!ifndef $(VBOX_OUTPUT_BASE_DIR)
   OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+!else
+  OUTPUT_DIRECTORY               = $(VBOX_OUTPUT_BASE_DIR)/riscv64
+!endif
   SUPPORTED_ARCHITECTURES        = RISCV64
   BUILD_TARGETS                  = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER               = DEFAULT
@@ -304,7 +308,9 @@
 !endif
   }
   SecurityPkg/VariableAuthenticated/SecureBootConfigDxe/SecureBootConfigDxe.inf
+!ifndef VBOX
   OvmfPkg/EnrollDefaultKeys/EnrollDefaultKeys.inf
+!endif
 !else
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 !endif
