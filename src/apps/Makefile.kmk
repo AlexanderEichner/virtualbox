@@ -29,7 +29,7 @@ SUB_DEPTH = ../..
 include $(KBUILD_PATH)/subheader.kmk
 
 # Not on Windows for now.
-ifneq ($(KBUILD_TARGET),win)
+ifn1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH),win.amd64 win.arm64 linux.riscv64)
  include $(PATH_SUB_CURRENT)/svn2git-vbox/Makefile.kmk
 endif
 
