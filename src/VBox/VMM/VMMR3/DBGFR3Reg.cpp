@@ -322,6 +322,9 @@ static int dbgfR3RegRegisterCommon(PUVM pUVM, PCDBGFREGDESC paRegisters, DBGFREG
 #elif defined(VBOX_VMM_TARGET_ARMV8)
     DBGFREG const  enmCpuFirst = DBGFREG_ARMV8_FIRST;
     DBGFREG const  enmCpuLast  = DBGFREG_ARMV8_LAST;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    DBGFREG const  enmCpuFirst = DBGFREG_RISCV_FIRST;
+    DBGFREG const  enmCpuLast  = DBGFREG_RISCV_LAST;
 #else
 # error "port me"
 #endif
@@ -931,6 +934,8 @@ static DECLCALLBACK(int) dbgfR3RegCpuQueryWorkerOnCpu(PUVM pUVM, VMCPUID idCpu, 
         DBGFREG const  enmCpuFirst = DBGFREG_X86_FIRST;
 #elif defined(VBOX_VMM_TARGET_ARMV8)
         DBGFREG const  enmCpuFirst = DBGFREG_ARMV8_FIRST;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        DBGFREG const  enmCpuFirst = DBGFREG_RISCV_FIRST;
 #else
 # error "port me"
 #endif

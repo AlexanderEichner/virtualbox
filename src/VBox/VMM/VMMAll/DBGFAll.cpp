@@ -51,7 +51,7 @@ AssertCompileMembersSameSizeAndOffset(VM, dbgf.s.cHardIntBreakpoints,   VM, dbgf
 AssertCompileMembersSameSizeAndOffset(VM, dbgf.s.cSoftIntBreakpoints,   VM, dbgf.ro.cSoftIntBreakpoints);
 AssertCompileMembersSameSizeAndOffset(VM, dbgf.s.cSelectedEvents,       VM, dbgf.ro.cSelectedEvents);
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 
 
 /**
@@ -436,7 +436,7 @@ VMM_INT_DECL(uint32_t) DBGFBpCheckDataWrite(PVMCC pVM, PVMCPUCC pVCpu, RTGCPTR G
     return dbgfBpCheckData<false /*a_fRead*/>(pVM, pVCpu, GCPtrAccess, cbAccess, fSysAccess);
 }
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 
 /**
  * Checks I/O access for guest or hypervisor hardware breakpoints.
@@ -695,7 +695,7 @@ VMM_INT_DECL(VBOXSTRICTRC) DBGFEventGenericWithArgs(PVM pVM, PVMCPU pVCpu, DBGFE
         /*
          * Any events on the stack. Should the incoming event be ignored?
          */
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         uint64_t const rip = CPUMGetGuestFlatPC(pVCpu); /* rip is a misnomer but saves us #ifdef's later on. */
 #else
         uint64_t const rip = CPUMGetGuestRIP(pVCpu);

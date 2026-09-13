@@ -45,8 +45,10 @@
 
 #ifdef VBOX_VMM_TARGET_ARMV8
 # include <VBox/vmm/iem-armv8.h>
-#else
+#elif defined(VBOX_VMM_TARGET_X86)
 # include <VBox/vmm/iem-x86-amd64.h>
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# include <VBox/vmm/iem-riscv.h>
 #endif
 
 

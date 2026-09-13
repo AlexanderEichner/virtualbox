@@ -1703,6 +1703,9 @@ static DBGFSTEPINSTRTYPE dbgfStepGetCurInstrType(PVM pVM, PVMCPU pVCpu)
         }
     }
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /** @todo */
+    RT_NOREF(pVM, pVCpu);
 #else
 # error "port me"
 #endif

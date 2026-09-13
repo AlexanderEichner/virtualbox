@@ -284,6 +284,8 @@ DECLCALLBACK(void) cpumR3CpuIdInfo(PVM pVM, PCDBGFINFOHLP pHlp, const char *pszA
     CPUMCPUIDINFOSTATEX86   InfoState;
 #elif defined(VBOX_VMM_TARGET_ARMV8)
     CPUMCPUIDINFOSTATEARMV8 InfoState;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    CPUMCPUIDINFOSTATERISCV InfoState;
 #else
 # error "port me"
 #endif
@@ -316,6 +318,8 @@ DECLCALLBACK(void) cpumR3CpuIdInfo(PVM pVM, PCDBGFINFOHLP pHlp, const char *pszA
     InfoState.cIdRegs       = pVM->cpum.s.GuestInfo.cIdRegs;
     InfoState.cIdRegs2      = 0;
     InfoState.paIdRegs2     = NULL;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /** @todo */
 #else
 # error "port me"
 #endif
@@ -356,6 +360,9 @@ DECLCALLBACK(void) cpumR3CpuIdInfo(PVM pVM, PCDBGFINFOHLP pHlp, const char *pszA
 #elif defined(VBOX_VMM_TARGET_ARMV8)
     CPUMR3CpuIdInfoArmV8(&InfoState);
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /** @todo */
+
 #else
 # error "port me"
 #endif
@@ -391,6 +398,8 @@ DECLCALLBACK(void) cpumR3CpuIdInfoHost(PVM pVM, PCDBGFINFOHLP pHlp, const char *
     CPUMCPUIDINFOSTATEX86   InfoState;
 #elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
     CPUMCPUIDINFOSTATEARMV8 InfoState;
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    CPUMCPUIDINFOSTATERISCV InfoState;
 #else
 # error "port me"
 #endif
@@ -440,6 +449,9 @@ DECLCALLBACK(void) cpumR3CpuIdInfoHost(PVM pVM, PCDBGFINFOHLP pHlp, const char *
     CPUMR3CpuIdInfoArmV8(&InfoState);
     RTMemFree(paFree);
 
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    /** @todo */
+    RT_NOREF(pVM);
 #else
 # error "port me"
 #endif

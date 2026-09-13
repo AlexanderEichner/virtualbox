@@ -9937,7 +9937,7 @@ FNIEMOP_DEF_1(iemOp_Grp15_lfence,   uint8_t, bRm)
     IEMOP_MNEMONIC(lfence, "lfence");
     IEM_MC_BEGIN(IEM_MC_F_NOT_286_OR_OLDER, 0);
     IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX_EX(fSse2);
-#ifdef RT_ARCH_ARM64
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)
     IEM_MC_CALL_VOID_AIMPL_0(iemAImpl_lfence);
 #else
     if (IEM_GET_HOST_CPU_FEATURES(pVCpu)->fSse2)
@@ -9957,7 +9957,7 @@ FNIEMOP_DEF_1(iemOp_Grp15_mfence,   uint8_t, bRm)
     IEMOP_MNEMONIC(mfence, "mfence");
     IEM_MC_BEGIN(IEM_MC_F_NOT_286_OR_OLDER, 0);
     IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX_EX(fSse2);
-#ifdef RT_ARCH_ARM64
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)
     IEM_MC_CALL_VOID_AIMPL_0(iemAImpl_mfence);
 #else
     if (IEM_GET_HOST_CPU_FEATURES(pVCpu)->fSse2)
@@ -9977,7 +9977,7 @@ FNIEMOP_DEF_1(iemOp_Grp15_sfence,   uint8_t, bRm)
     IEMOP_MNEMONIC(sfence, "sfence");
     IEM_MC_BEGIN(IEM_MC_F_NOT_286_OR_OLDER, 0);
     IEMOP_HLP_DONE_DECODING_NO_LOCK_PREFIX_EX(fSse2);
-#ifdef RT_ARCH_ARM64
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)
     IEM_MC_CALL_VOID_AIMPL_0(iemAImpl_sfence);
 #else
     if (IEM_GET_HOST_CPU_FEATURES(pVCpu)->fSse2)
@@ -12509,11 +12509,11 @@ FNIEMOP_DEF_1(iemOp_Grp9_cmpxchg16b_Mdq, uint8_t, bRm)
         else
         {
             BODY_CMPXCHG16B_HEAD(IEM_MC_ARG(uint8_t, bUnmapInfo, 4),RW);
-            IEM_MC_CALL_CIMPL_4(IEM_CIMPL_F_STATUS_FLAGS,
+            IEM_MC_CALL_CIMPL_5(IEM_CIMPL_F_STATUS_FLAGS,
                                   RT_BIT_64(kIemNativeGstReg_GprFirst + X86_GREG_xAX)
                                 | RT_BIT_64(kIemNativeGstReg_GprFirst + X86_GREG_xDX),
                                 iemCImpl_cmpxchg16b_fallback_rendezvous,
-                                pu128MemDst, pu128RaxRdx, pu128RbxRcx, pEFlags);
+                                pu128MemDst, pu128RaxRdx, pu128RbxRcx, pEFlags, bUnmapInfo);
             IEM_MC_END();
             /* Does not get here, tail code is duplicated in iemCImpl_cmpxchg16b_fallback_rendezvous. */
         }

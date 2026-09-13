@@ -168,7 +168,7 @@ DECLINLINE(int) dbgfBpHit(PVMCC pVM, PVMCPUCC pVCpu, PCPUMCTX pCtx, DBGFBP hBp, 
     uint64_t cHits = ASMAtomicIncU64(&pBp->Pub.cHits); RT_NOREF(cHits);
 
     RT_NOREF(pCtx);
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     LogFlow(("dbgfBpHit: hit breakpoint %u at %RGv cHits=0x%RX64\n", hBp, pCtx->Pc.u64, cHits));
 #else
     LogFlow(("dbgfBpHit: hit breakpoint %u at %04x:%RGv cHits=0x%RX64\n", hBp, pCtx->cs.Sel, pCtx->rip, cHits));
@@ -479,7 +479,7 @@ VMM_INT_DECL(VBOXSTRICTRC) DBGFBpCheckPortIo(PVMCC pVM, PVMCPU pVCpu, RTIOPORT u
 }
 
 
-#ifndef VBOX_VMM_TARGET_ARMV8 /** @todo for hardware break-/watchpoints */
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV) /** @todo for hardware break-/watchpoints */
 /**
  * \#DB (Debug event) handler.
  *
@@ -560,7 +560,7 @@ VMM_INT_DECL(VBOXSTRICTRC) DBGFTrap03Handler(PVMCC pVM, PVMCPUCC pVCpu, PCPUMCTX
     if (paBpLocL1)
     {
         RTGCPTR GCPtrBp;
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         int rc = VINF_SUCCESS;
         GCPtrBp = pCtx->Pc.u64;
 #else

@@ -2368,7 +2368,9 @@ static void CmpXchg16bTest(void)
     } const s_aFuncs[] =
     {
         { "cmpxchg16b",          iemAImpl_cmpxchg16b },
+#if !defined(RT_ARCH_RISCV64)
         { "cmpxchg16b_locked",   iemAImpl_cmpxchg16b_locked },
+#endif
 #if !defined(RT_ARCH_ARM64)
         { "cmpxchg16b_fallback", iemAImpl_cmpxchg16b_fallback },
 #endif

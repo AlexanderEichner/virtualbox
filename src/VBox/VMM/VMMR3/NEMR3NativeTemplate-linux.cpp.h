@@ -922,8 +922,8 @@ static int nemR3LnxDisableGimHyperV(PVM pVM)
         {
             LogRel(("NEM: Adjusting GIM configuration from HyperV to Minimal mode.  HyperV is currently not supported for GIM on NEM!\n"));
             LogRel(("NEM: Disable KVM if you need the HyperV GIM provider for your guests!\n"));
-            rc = CFGMR3RemoveValue(pCfg, "Provider");
-            rc = CFGMR3InsertString(pCfg, "Provider", "Minimal");
+            //rc = CFGMR3RemoveValue(pCfg, "Provider");
+            //rc = CFGMR3InsertString(pCfg, "Provider", "Minimal");
             AssertLogRelRCReturn(rc, rc);
         }
     }

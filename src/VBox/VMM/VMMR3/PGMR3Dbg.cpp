@@ -1179,6 +1179,11 @@ VMMR3_INT_DECL(int) PGMR3DbgScanVirtual(PVM pVM, PVMCPU pVCpu, RTGCPTR GCPtr, RT
                 GCPtr += (RTGCPTR)cPagesCanSkip << 12;
                 continue;
             }
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+            /** @todo */
+            AssertFailed(); RT_NOREF(cPagesCanSkip);
+
 #else
 # error "port me"
 #endif
@@ -1190,7 +1195,7 @@ VMMR3_INT_DECL(int) PGMR3DbgScanVirtual(PVM pVM, PVMCPU pVCpu, RTGCPTR GCPtr, RT
         cPages -= cIncPages;
 #ifdef VBOX_VMM_TARGET_X86
         GCPtr += (RTGCPTR)cIncPages << X86_PT_PAE_SHIFT;
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         GCPtr += (RTGCPTR)cIncPages << 12;
 #else
 # error "port me"

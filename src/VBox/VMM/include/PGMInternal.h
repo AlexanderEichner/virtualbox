@@ -297,7 +297,7 @@ AssertCompile(PGM_MAX_PAGES_PER_ROM_RANGE <= PGM_MAX_PAGES_PER_RAM_RANGE);
        || (uType) == PGM_TYPE_NESTED_AMD64 \
        || (uType) == PGM_TYPE_EPT)
 
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 /** @name Defines used to indicate the guest paging in the templates.
  * @{ */
 /** MMU disabled. */
@@ -402,7 +402,7 @@ AssertCompile(PGM_MAX_PAGES_PER_ROM_RANGE <= PGM_MAX_PAGES_PER_RAM_RANGE);
  * @param   pVM         The cross context VM structure.
  * @param   GCVirt      The virtual address of the page to invalidate.
  */
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define PGM_INVL_PG_ALL_VCPU(pVM, GCVirt)      do { } while(0)
 #else
 # define PGM_INVL_PG_ALL_VCPU(pVM, GCVirt)      HMInvalidatePageOnAllVCpus(pVM, (RTGCPTR)(GCVirt))
@@ -414,7 +414,7 @@ AssertCompile(PGM_MAX_PAGES_PER_ROM_RANGE <= PGM_MAX_PAGES_PER_RAM_RANGE);
  * @param   pVCpu       The cross context virtual CPU structure.
  * @param   GCVirt      The virtual address within the page directory to invalidate.
  */
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define PGM_INVL_BIG_PG(pVCpu, GCVirt)         do { } while(0)
 #else
 # define PGM_INVL_BIG_PG(pVCpu, GCVirt)         HMFlushTlb(pVCpu)
@@ -425,7 +425,7 @@ AssertCompile(PGM_MAX_PAGES_PER_ROM_RANGE <= PGM_MAX_PAGES_PER_RAM_RANGE);
  *
  * @param   pVCpu       The cross context virtual CPU structure.
  */
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define PGM_INVL_VCPU_TLBS(pVCpu)             do { } while(0)
 #else
 # define PGM_INVL_VCPU_TLBS(pVCpu)             HMFlushTlb(pVCpu)
@@ -436,7 +436,7 @@ AssertCompile(PGM_MAX_PAGES_PER_ROM_RANGE <= PGM_MAX_PAGES_PER_RAM_RANGE);
  *
  * @param   pVM         The cross context VM structure.
  */
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define PGM_INVL_ALL_VCPU_TLBS(pVM)            do { } while(0)
 #else
 # define PGM_INVL_ALL_VCPU_TLBS(pVM)            HMFlushTlbOnAllVCpus(pVM)
@@ -2494,7 +2494,7 @@ DECLINLINE(void *) pgmPoolMapPageStrict(PPGMPOOLPAGE a_pPage, const char *pszCal
  * @{ */
 #if defined(VBOX_VMM_TARGET_X86) || defined(DOXYGEN_RUNNING)
 # define PGM_WITH_A20
-#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(IN_TSTVMSTRUCT)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV) && !defined(IN_TSTVMSTRUCT)
 # error "Misconfig"
 #endif
 #ifdef PGM_WITH_A20
@@ -2838,6 +2838,8 @@ typedef struct PGMMODEDATAGST
 # define PGM_GUEST_MODE_DATA_ARRAY_SIZE      (PGM_TYPE_AMD64 + 1)
 #elif defined(VBOX_VMM_TARGET_ARMV8)
 # define PGM_GUEST_MODE_DATA_ARRAY_SIZE      (512 + 2) /** @todo Find a better way to express that. */
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# define PGM_GUEST_MODE_DATA_ARRAY_SIZE      (2) /** @todo. */
 #else
 # error "Port me"
 #endif
@@ -3750,6 +3752,11 @@ typedef struct PGMCPU
     uint64_t                        afLookupMaskTtbr0[4];
     /** The initial lookup mask for translations going through TTBR1_ELx. */
     uint64_t                        afLookupMaskTtbr1[4];
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /** What needs syncing (PGM_SYNC_*).
+     * This is used to queue operations for PGMSyncCR3, PGMInvalidatePage,
+     * PGMFlushTLB, and PGMR3Load. */
+    uint32_t                        fSyncFlags;
 #endif
 
     /** Count the number of pgm pool access handler calls. */

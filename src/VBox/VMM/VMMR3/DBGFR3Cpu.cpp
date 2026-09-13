@@ -58,6 +58,8 @@ static DECLCALLBACK(int) dbgfR3CpuGetMode(PVM pVM, VMCPUID idCpu, CPUMMODE *penm
     CPUM_IMPORT_EXTRN_RET(pVCpu, CPUMCTX_EXTRN_PSTATE);
 #elif defined(VBOX_VMM_TARGET_X86)
     CPUM_IMPORT_EXTRN_RET(pVCpu, CPUMCTX_EXTRN_CR0 | CPUMCTX_EXTRN_EFER);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed(); /** @todo */
 #else
 # error "port me"
 #endif
@@ -103,6 +105,8 @@ static DECLCALLBACK(int) dbgfR3CpuIn64BitCode(PVM pVM, VMCPUID idCpu, bool *pfIn
     CPUM_IMPORT_EXTRN_RET(pVCpu, CPUMCTX_EXTRN_PSTATE);
 #elif defined(VBOX_VMM_TARGET_X86)
     CPUM_IMPORT_EXTRN_RET(pVCpu, CPUMCTX_EXTRN_CR0 | CPUMCTX_EXTRN_EFER);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed(); /** @todo */
 #else
 # error "port me"
 #endif

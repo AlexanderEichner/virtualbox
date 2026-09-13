@@ -57,7 +57,8 @@ VMMR3_INT_DECL(int) GVMMR3CreateVM(PUVM pUVM, VMTARGET enmTarget, uint32_t cCpus
                                    PVM *ppVM, PRTR0PTR ppVMR0)
 {
     AssertReturn(cCpus >= VMM_MIN_CPU_COUNT && cCpus <= VMM_MAX_CPU_COUNT, VERR_INVALID_PARAMETER);
-    AssertReturn(enmTarget == VMTARGET_X86 || enmTarget == VMTARGET_ARMV8, VERR_INVALID_PARAMETER);
+    AssertReturn(enmTarget == VMTARGET_X86 || enmTarget == VMTARGET_ARMV8 || enmTarget == VMTARGET_RISCV,
+                 VERR_INVALID_PARAMETER);
     AssertReturn((sizeof(VM)    & RTSystemGetPageOffsetMask()) == 0, VERR_UNSUPPORTED_ALIGNMENT);
     AssertReturn((sizeof(VMCPU) & RTSystemGetPageOffsetMask()) == 0, VERR_UNSUPPORTED_ALIGNMENT);
 

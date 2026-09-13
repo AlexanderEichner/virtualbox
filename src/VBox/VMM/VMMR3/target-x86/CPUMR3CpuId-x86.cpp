@@ -4671,7 +4671,7 @@ static int cpumR3LoadCpuIdInner(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersion, PCP
      */
     bool fStrictCpuIdChecks;
     CFGMR3QueryBoolDef(CFGMR3GetChild(CFGMR3GetRoot(pVM), "CPUM"), "StrictCpuIdChecks", &fStrictCpuIdChecks,
-#ifdef RT_ARCH_ARM64
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)
                        false
 #else
                        true

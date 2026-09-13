@@ -1036,6 +1036,9 @@ static DECLCALLBACK(int) pdmR3SaveExec(PVM pVM, PSSMHANDLE pSSM)
 #elif defined(VBOX_VMM_TARGET_X86)
         SSMR3PutU32(pSSM, VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_APIC));
         SSMR3PutU32(pSSM, VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_PIC));
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        AssertFailed();
+        /** @todo */
 #else
 # error "port me"
 #endif
@@ -1075,6 +1078,10 @@ static DECLCALLBACK(int) pdmR3LoadPrep(PVM pVM, PSSMHANDLE pSSM)
         LogFlow(("pdmR3LoadPrep: VCPU %u %s%s\n", idCpu,
                 VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_APIC) ? " VMCPU_FF_INTERRUPT_APIC" : "",
                 VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INTERRUPT_PIC)  ? " VMCPU_FF_INTERRUPT_PIC" : ""));
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        AssertFailed();
+        /** @todo */
+        RT_NOREF(pVCpu);
 # else
 #  error "port me"
 # endif
@@ -1099,6 +1106,9 @@ static DECLCALLBACK(int) pdmR3LoadPrep(PVM pVM, PSSMHANDLE pSSM)
 #elif defined(VBOX_VMM_TARGET_X86)
         VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INTERRUPT_APIC);
         VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INTERRUPT_PIC);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        AssertFailed();
+        /** @todo */
 #else
 # error "port me"
 #endif
@@ -1173,6 +1183,9 @@ static DECLCALLBACK(int) pdmR3LoadExec(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersi
                             ("VCPU%03u: VMCPU_FF_INTERRUPT_APIC set! Devices shouldn't set interrupts during state restore...\n", idCpu));
             if (fInterruptPending)
                 VMCPU_FF_SET(pVCpu, VMCPU_FF_INTERRUPT_APIC);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+            AssertFailed();
+            /** @todo */
 #else
 # error "port me"
 #endif
@@ -1198,6 +1211,9 @@ static DECLCALLBACK(int) pdmR3LoadExec(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersi
                             ("VCPU%03u: VMCPU_FF_INTERRUPT_PIC set!  Devices shouldn't set interrupts during state restore...\n", idCpu));
             if (fInterruptPending)
                 VMCPU_FF_SET(pVCpu, VMCPU_FF_INTERRUPT_PIC);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+            AssertFailed();
+            /** @todo */
 #else
 # error "port me"
 #endif
@@ -1760,6 +1776,9 @@ VMMR3_INT_DECL(void) PDMR3ResetCpu(PVMCPU pVCpu)
 #elif defined(VBOX_VMM_TARGET_X86)
     VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INTERRUPT_APIC);
     VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INTERRUPT_PIC);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed();
+    /** @todo */
 #else
 # error "port me"
 #endif

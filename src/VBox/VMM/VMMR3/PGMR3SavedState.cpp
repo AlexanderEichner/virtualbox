@@ -76,7 +76,7 @@
 # define PGM_SAVED_STATE_VERSION_RR_DESC         7
 /** Saved state data unit version. */
 # define PGM_SAVED_STATE_VERSION_OLD_PHYS_CODE   6
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 /** Saved state data unit version.  */
 # define PGM_SAVED_STATE_VERSION                 1
 #endif
@@ -217,7 +217,7 @@ static const SSMFIELD s_aPGMFields_Old[] =
     SSMFIELD_ENTRY(         PGMOLD, enmGuestMode),
     SSMFIELD_ENTRY_TERM()
 };
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 static const SSMFIELD s_aPGMCpuFields[] =
 {
     SSMFIELD_ENTRY_TERM()
@@ -2709,7 +2709,7 @@ static int pgmR3LoadMemory(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersion, uint32_t
 {
     NOREF(uPass);
 
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(uVersion);
 #endif
 
@@ -3251,7 +3251,7 @@ static int pgmR3LoadFinalLocked(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersion)
     else
         rc = pgmR3LoadMemoryOld(pVM, pSSM, uVersion);
 
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     rc = SSMR3GetStructEx(pSSM, pPGM, sizeof(*pPGM), 0 /*fFlags*/, &s_aPGMFields[0], NULL /*pvUser*/);
     AssertLogRelRCReturn(rc, rc);
 
@@ -3324,7 +3324,7 @@ static DECLCALLBACK(int) pgmR3Load(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersion, 
         AssertMsgFailed(("pgmR3Load: Invalid version uVersion=%d (current %d)!\n", uVersion, PGM_SAVED_STATE_VERSION));
         return VERR_SSM_UNSUPPORTED_DATA_UNIT_VERSION;
     }
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     if (uVersion != PGM_SAVED_STATE_VERSION)
     {
         AssertMsgFailed(("pgmR3Load: Invalid version uVersion=%d (current %d)!\n", uVersion, PGM_SAVED_STATE_VERSION));
@@ -3407,7 +3407,7 @@ static DECLCALLBACK(int) pgmR3Load(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersion, 
                 /* Update the PSE, NX flags and validity masks. */
                 pVCpu->pgm.s.fGst32BitPageSizeExtension = CPUMIsGuestPageSizeExtEnabled(pVCpu);
                 PGMNotifyNxeChanged(pVCpu, CPUMIsGuestNXEnabled(pVCpu));
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
                 RT_NOREF(pVCpu); /** @todo */
 #else
 # error "Port me"

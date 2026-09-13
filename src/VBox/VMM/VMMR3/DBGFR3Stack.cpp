@@ -79,6 +79,8 @@ typedef struct DBGFUNWINDCTX
         m_State.enmArch      = RTLDRARCH_ARM64;
 #elif defined(VBOX_VMM_TARGET_X86)
         m_State.enmArch      = RTLDRARCH_AMD64;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        m_State.enmArch      = RTLDRARCH_RISCV64;
 #else
 # error "port me"
 #endif
@@ -181,6 +183,8 @@ static DECLCALLBACK(int) dbgfR3StackReadCallback(PRTDBGUNWINDSTATE pThis, RTUINT
 #elif defined(VBOX_VMM_TARGET_X86)
     Assert(   pThis->enmArch == RTLDRARCH_AMD64
            || pThis->enmArch == RTLDRARCH_X86_32);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    Assert(pThis->enmArch == RTLDRARCH_RISCV64);
 #else
 # error "port me"
 #endif
@@ -251,6 +255,11 @@ static bool dbgfR3UnwindCtxSetPcAndSp(PDBGFUNWINDCTX pUnwindCtx, PCDBGFADDRESS p
         pUnwindCtx->m_State.u.x86.auRegs[X86_GREG_xSP] = pAddrStack->off;
         pUnwindCtx->m_State.u.x86.auSegs[X86_SREG_SS]  = pAddrStack->Sel;
     }
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed();
+    /** @todo */
+    RT_NOREF(pUnwindCtx, pAddrPC, pAddrStack);
 
 #else
 # error "port me"
@@ -330,7 +339,7 @@ DECLINLINE(int) dbgfR3StackRead(PUVM pUVM, VMCPUID idCpu, void *pvBuf, PCDBGFADD
     return rc;
 }
 
-#if !defined(VBOX_VMM_TARGET_ARMV8) /** @todo Unused on ARMv8 for now. */
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV) /** @todo Unused on ARMv8 for now. */
 /**
  * Collects sure registers on frame exit.
  *
@@ -605,6 +614,11 @@ DECL_NO_INLINE(static, int) dbgfR3StackWalk(PDBGFUNWINDCTX pUnwindCtx, PDBGFSTAC
                     break;
             }
     }
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    unsigned const cbRetAddr   = 8;
+    unsigned const cbStackItem = 8; /** @todo RV32. */
+    PVMCPUCC const pVCpu = pUnwindCtx->m_pUVM->pVM->apCpusR3[pUnwindCtx->m_idCpu];
+    RT_NOREF(pVCpu);
 #endif
 
     /*
@@ -1017,7 +1031,7 @@ static DECLCALLBACK(int) dbgfR3StackWalkCtxFull(PUVM pUVM, VMCPUID idCpu, PCCPUM
     int rc = VINF_SUCCESS;
     if (pAddrPC)
         pCur->AddrPC = *pAddrPC;
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     else
         DBGFR3AddrFromFlat(pUVM, &pCur->AddrPC, pCtx->Pc.u64);
 #elif defined(VBOX_VMM_TARGET_X86)
@@ -1071,6 +1085,12 @@ static DECLCALLBACK(int) dbgfR3StackWalkCtxFull(PUVM pUVM, VMCPUID idCpu, PCCPUM
                 if (enmReturnType == RTDBGRETURNTYPE_INVALID)
                     pCur->enmReturnType = RTDBGRETURNTYPE_NEAR64;
             }
+#elif defined(VBOX_VMM_TARGET_RISCV)
+            /** @todo */
+            Assert(enmCpuMode == CPUMMODE_RISCV_RV64); RT_NOREF(enmCpuMode);
+            fAddrMask = UINT64_MAX;
+            if (enmReturnType == RTDBGRETURNTYPE_INVALID)
+                pCur->enmReturnType = RTDBGRETURNTYPE_NEAR64;
 #endif
         }
 

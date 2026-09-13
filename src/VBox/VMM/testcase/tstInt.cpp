@@ -36,6 +36,8 @@
 # define VBOX_VMM_TARGET_X86
 #elif defined(RT_ARCH_ARM64)
 # define VBOX_VMM_TARGET_ARMV8
+#elif defined(RT_ARCH_RISCV64)
+# define VBOX_VMM_TARGET_RISCV
 #else
 # error "port me"
 #endif

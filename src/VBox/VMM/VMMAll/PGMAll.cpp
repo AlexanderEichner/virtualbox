@@ -763,6 +763,10 @@ AssertCompile(PGMMODE_NONE == 32);
 
 #elif defined(VBOX_VMM_TARGET_ARMV8)
 # include "PGMAllGst-armv8.cpp.h"
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /** @todo */
+
 #else
 # error "port me"
 #endif
@@ -1814,6 +1818,12 @@ VMMDECL(int) PGMGstGetPage(PVMCPUCC pVCpu, RTGCPTR GCPtr, PPGMPTWALK pWalk)
     AssertReturn(idx < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
     AssertReturn(g_aPgmGuestModeData[idx].pfnGetPage, VERR_PGM_MODE_IPE);
     return g_aPgmGuestModeData[idx].pfnGetPage(pVCpu, GCPtr, pWalk);
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed();
+    RT_NOREF(pVCpu, GCPtr, pWalk);
+    return VERR_NOT_IMPLEMENTED;
+
 #else
 # error "Port me"
 #endif
@@ -1851,6 +1861,12 @@ VMM_INT_DECL(int) PGMGstQueryPageFast(PVMCPUCC pVCpu, RTGCPTR GCPtr, uint32_t fF
     AssertReturn(idx < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
     AssertReturn(g_aPgmGuestModeData[idx].pfnGetPage, VERR_PGM_MODE_IPE);
     return g_aPgmGuestModeData[idx].pfnQueryPageFast(pVCpu, GCPtr, fFlags, pWalk);
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed();
+    RT_NOREF(pVCpu, GCPtr, fFlags, pWalk);
+    return VERR_NOT_IMPLEMENTED;
+
 #else
 # error "Port me"
 #endif
@@ -1918,6 +1934,12 @@ int pgmGstPtWalk(PVMCPUCC pVCpu, RTGCPTR GCPtr, PPGMPTWALK pWalk, PPGMPTWALKGST 
     AssertReturn(idx < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
     AssertReturn(g_aPgmGuestModeData[idx].pfnGetPage, VERR_PGM_MODE_IPE);
     return g_aPgmGuestModeData[idx].pfnWalk(pVCpu, GCPtr, pWalk, pGstWalk);
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed();
+    RT_NOREF(pVCpu, GCPtr, pWalk, pGstWalk);
+    return VERR_NOT_IMPLEMENTED;
+
 #else
 # error "port me"
 #endif
@@ -3396,6 +3418,15 @@ VMM_INT_DECL(int) PGMChangeMode(PVMCPUCC pVCpu, uint8_t bEl, uint64_t u64RegSctl
 
     return rc;
 }
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+
+VMM_INT_DECL(int) PGMChangeMode(PVMCPUCC pVCpu)
+{
+    VMCPU_ASSERT_EMT_OR_NOT_RUNNING(pVCpu);
+    return VERR_NOT_IMPLEMENTED;
+}
+
 #else
 # error "Port me"
 #endif /* VBOX_VMM_TARGET_X86 */
@@ -3636,6 +3667,14 @@ VMM_INT_DECL(int) PGMHCChangeMode(PVMCC pVM, PVMCPUCC pVCpu, PGMMODE enmGuestMod
     RT_NOREF(pVM, pVCpu, enmGuestMode, fForce);
     return VINF_SUCCESS;
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    //Log(("PGMHCChangeMode: Guest mode: %s -> %s\n", PGMGetModeName(pVCpu->pgm.s.aenmGuestMode[1]), PGMGetModeName(enmGuestMode)));
+    STAM_REL_COUNTER_INC(&pVCpu->pgm.s.cGuestModeChanges);
+
+    //AssertReleaseFailed(); /** @todo Called by the PGM saved state code. */
+    RT_NOREF(pVM, pVCpu, enmGuestMode, fForce);
+    return VINF_SUCCESS;
+
 #else
 # error "port me"
 #endif
@@ -3695,6 +3734,10 @@ VMMDECL(PGMMODE) PGMGetGuestMode(PVMCPU pVCpu)
     if (enmMode == PGMMODE_NONE && pVCpu->pgm.s.aenmGuestMode[0] != PGMMODE_NONE)
         enmMode = pVCpu->pgm.s.aenmGuestMode[0];
     return enmMode;
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed(); RT_NOREF(pVCpu);
+    return PGMMODE_NONE;
 
 #else
 # error "Port me"

@@ -1429,7 +1429,7 @@ VMM_INT_DECL(VBOXSTRICTRC)      gimHvXcptUD(PVMCPUCC pVCpu, PCPUMCTX pCtx, PDISS
 VMM_INT_DECL(VBOXSTRICTRC)      gimHvHypercall(PVMCPUCC pVCpu, PCPUMCTX pCtx);
 VMM_INT_DECL(VBOXSTRICTRC)      gimHvHypercallEx(PVMCPUCC pVCpu, PCPUMCTX pCtx, unsigned uDisOpcode, uint8_t cbInstr);
 VMM_INT_DECL(void)              gimHvDeliverTimerMsg(PVMCPUCC pVCpu, PGIMHVSTIMER pHvStimer);
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 VMM_INT_DECL(VBOXSTRICTRC)      gimHvReadMsr(PVMCPUCC pVCpu, uint32_t idMsr, PCCPUMMSRRANGE pRange, uint64_t *puValue);
 VMM_INT_DECL(VBOXSTRICTRC)      gimHvWriteMsr(PVMCPUCC pVCpu, uint32_t idMsr, PCCPUMMSRRANGE pRange, uint64_t uRawValue);
 #endif

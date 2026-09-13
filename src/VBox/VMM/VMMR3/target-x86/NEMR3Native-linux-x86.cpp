@@ -94,7 +94,7 @@ static int nemR3LnxInitSetupVm(PVM pVM, PRTERRINFO pErrInfo)
     if (   rcLnx > 0
         && (rcLnx & KVM_BUS_LOCK_DETECTION_EXIT))
     {
-        LogRel(("NEM: Enabling KVM_CAP_X86_BUS_LOCK_EXIT"));
+        LogRel(("NEM: Enabling KVM_CAP_X86_BUS_LOCK_EXIT\n"));
         RT_ZERO(CapEn);
         CapEn.cap     = KVM_CAP_X86_BUS_LOCK_EXIT;
         CapEn.args[0] = KVM_BUS_LOCK_DETECTION_EXIT;
@@ -165,6 +165,12 @@ static int nemR3LnxInitSetupVm(PVM pVM, PRTERRINFO pErrInfo)
 
         /* We want all x86 registers and events on each exit. */
         pVCpu->nem.s.pRun->kvm_valid_regs = KVM_SYNC_X86_REGS | KVM_SYNC_X86_SREGS | KVM_SYNC_X86_EVENTS;
+
+        RT_ZERO(CapEn);
+        CapEn.cap     = KVM_CAP_HYPERV_SYNIC2;
+        rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_ENABLE_CAP, &CapEn);
+        if (rcLnx == -1)
+            return RTErrInfoSetF(pErrInfo, VERR_NEM_VM_CREATE_FAILED, "Failed to enable KVM_CAP_HYPERV_SYNIC2 failed: %u", errno);
     }
     return VINF_SUCCESS;
 }
@@ -213,11 +219,24 @@ static int nemR3LnxMsrQueryOne(PVMCPU pVCpu, uint32_t idMsr, uint64_t *pu64)
  */
 static int nemR3LnxUpdateCpuIdsLeaves(PVM pVM, PVMCPU pVCpu)
 {
+    struct kvm_cpuid2 *pReqHv = (struct kvm_cpuid2 *)alloca(RT_UOFFSETOF_DYN(struct kvm_cpuid2, entries[10 + 2]));
+#if 1
+    {
+        pReqHv->nent    = 10;
+        pReqHv->padding = 0;
+
+        int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_GET_SUPPORTED_HV_CPUID, pReqHv);
+        AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d cLeaves=%#x\n", rcLnx, errno, 10), RTErrConvertFromErrno(errno));
+    }
+#else
+    pReqHv->nent    = 0;
+#endif
+
     uint32_t              cLeaves  = 0;
     PCCPUMCPUIDLEAF const paLeaves = CPUMR3CpuIdGetPtr(pVM, &cLeaves);
-    struct kvm_cpuid2    *pReq = (struct kvm_cpuid2 *)alloca(RT_UOFFSETOF_DYN(struct kvm_cpuid2, entries[cLeaves + 2]));
+    struct kvm_cpuid2    *pReq = (struct kvm_cpuid2 *)alloca(RT_UOFFSETOF_DYN(struct kvm_cpuid2, entries[pReqHv->nent + cLeaves + 2]));
 
-    pReq->nent    = cLeaves;
+    pReq->nent    = cLeaves + pReqHv->nent;
     pReq->padding = 0;
 
     for (uint32_t i = 0; i < cLeaves; i++)
@@ -239,6 +258,23 @@ static int nemR3LnxUpdateCpuIdsLeaves(PVM pVM, PVMCPU pVCpu)
         pReq->entries[i].padding[0] = 0;
         pReq->entries[i].padding[1] = 0;
         pReq->entries[i].padding[2] = 0;
+    }
+
+    if (pReqHv->nent)
+    {
+        for (uint32_t i = 0; i < pReqHv->nent; i++)
+        {
+            pReq->entries[cLeaves + i].function   = pReqHv->entries[i].function;
+            pReq->entries[cLeaves + i].index      = pReqHv->entries[i].index;
+            pReq->entries[cLeaves + i].flags      = pReqHv->entries[i].flags;
+            pReq->entries[cLeaves + i].eax        = pReqHv->entries[i].eax;
+            pReq->entries[cLeaves + i].ebx        = pReqHv->entries[i].ebx;
+            pReq->entries[cLeaves + i].ecx        = pReqHv->entries[i].ecx;
+            pReq->entries[cLeaves + i].edx        = pReqHv->entries[i].edx;
+            pReq->entries[cLeaves + i].padding[0] = 0;
+            pReq->entries[cLeaves + i].padding[1] = 0;
+            pReq->entries[cLeaves + i].padding[2] = 0;
+        }
     }
 
     int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_CPUID2, pReq);
@@ -450,6 +486,82 @@ DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
         /** @todo add more? */
     }
     MSR_RANGE_END(64);
+
+#if 1
+    MSR_RANGE_BEGIN(0x40000000, 0x40003000, KVM_MSR_FILTER_READ | KVM_MSR_FILTER_WRITE);
+    if (1)
+    {
+        /* Hyper-V range: 4000_0000 to 4000_3000 */
+        MSR_RANGE_ADD(MSR_HV_GUEST_OS_ID);
+        MSR_RANGE_ADD(MSR_HV_HYPERCALL);
+        MSR_RANGE_ADD(MSR_HV_VP_INDEX);
+        MSR_RANGE_ADD(MSR_HV_RESET);
+        MSR_RANGE_ADD(MSR_HV_VP_RUNTIME);
+        MSR_RANGE_ADD(MSR_HV_TIME_REF_COUNT);
+        MSR_RANGE_ADD(MSR_HV_REF_TSC);
+        MSR_RANGE_ADD(MSR_HV_TSC_FREQ);
+        MSR_RANGE_ADD(MSR_HV_APIC_FREQ);
+        MSR_RANGE_ADD(MSR_HV_EOI);
+        MSR_RANGE_ADD(MSR_HV_ICR);
+        MSR_RANGE_ADD(MSR_HV_TPR);
+        MSR_RANGE_ADD(MSR_HV_APIC_ASSIST_PAGE);
+        MSR_RANGE_ADD(MSR_HV_SCONTROL);
+        MSR_RANGE_ADD(MSR_HV_SVERSION);
+        MSR_RANGE_ADD(MSR_HV_SIEFP);
+        MSR_RANGE_ADD(MSR_HV_SIMP);
+        MSR_RANGE_ADD(MSR_HV_EOM);
+        MSR_RANGE_ADD(MSR_HV_SINT0);
+        MSR_RANGE_ADD(MSR_HV_SINT1);
+        MSR_RANGE_ADD(MSR_HV_SINT2);
+        MSR_RANGE_ADD(MSR_HV_SINT3);
+        MSR_RANGE_ADD(MSR_HV_SINT4);
+        MSR_RANGE_ADD(MSR_HV_SINT5);
+        MSR_RANGE_ADD(MSR_HV_SINT6);
+        MSR_RANGE_ADD(MSR_HV_SINT7);
+        MSR_RANGE_ADD(MSR_HV_SINT8);
+        MSR_RANGE_ADD(MSR_HV_SINT9);
+        MSR_RANGE_ADD(MSR_HV_SINT10);
+        MSR_RANGE_ADD(MSR_HV_SINT11);
+        MSR_RANGE_ADD(MSR_HV_SINT12);
+        MSR_RANGE_ADD(MSR_HV_SINT13);
+        MSR_RANGE_ADD(MSR_HV_SINT14);
+        MSR_RANGE_ADD(MSR_HV_SINT15);
+        MSR_RANGE_ADD(MSR_HV_STIMER0_CONFIG);
+        MSR_RANGE_ADD(MSR_HV_STIMER0_COUNT);
+        MSR_RANGE_ADD(MSR_HV_STIMER1_CONFIG);
+        MSR_RANGE_ADD(MSR_HV_STIMER1_COUNT);
+        MSR_RANGE_ADD(MSR_HV_STIMER2_CONFIG);
+        MSR_RANGE_ADD(MSR_HV_STIMER2_COUNT);
+        MSR_RANGE_ADD(MSR_HV_STIMER3_CONFIG);
+        MSR_RANGE_ADD(MSR_HV_STIMER3_COUNT);
+        MSR_RANGE_ADD(MSR_HV_POWER_STATE_TRIGGER_C1);
+        MSR_RANGE_ADD(MSR_HV_POWER_STATE_TRIGGER_C2);
+        MSR_RANGE_ADD(MSR_HV_POWER_STATE_TRIGGER_C3);
+        MSR_RANGE_ADD(MSR_HV_POWER_STATE_CONFIG_C1);
+        MSR_RANGE_ADD(MSR_HV_POWER_STATE_CONFIG_C2);
+        MSR_RANGE_ADD(MSR_HV_POWER_STATE_CONFIG_C3);
+        MSR_RANGE_ADD(MSR_HV_STATS_PART_RETAIL_PAGE);
+        MSR_RANGE_ADD(MSR_HV_STATS_PART_INTERNAL_PAGE);
+        MSR_RANGE_ADD(MSR_HV_STATS_VP_RETAIL_PAGE);
+        MSR_RANGE_ADD(MSR_HV_STATS_VP_INTERNAL_PAGE);
+        MSR_RANGE_ADD(MSR_HV_GUEST_IDLE);
+        MSR_RANGE_ADD(MSR_HV_SYNTH_DEBUG_CONTROL);
+        MSR_RANGE_ADD(MSR_HV_SYNTH_DEBUG_STATUS);
+        MSR_RANGE_ADD(MSR_HV_SYNTH_DEBUG_SEND_BUFFER);
+        MSR_RANGE_ADD(MSR_HV_SYNTH_DEBUG_RECEIVE_BUFFER);
+        MSR_RANGE_ADD(MSR_HV_SYNTH_DEBUG_PENDING_BUFFER);
+        MSR_RANGE_ADD(MSR_HV_DEBUG_OPTIONS_MSR);
+        //MSR_RANGE_ADD(MSR_HV_CRASH_P0);
+        //MSR_RANGE_ADD(MSR_HV_CRASH_P1);
+        //MSR_RANGE_ADD(MSR_HV_CRASH_P2);
+        //MSR_RANGE_ADD(MSR_HV_CRASH_P3);
+        //MSR_RANGE_ADD(MSR_HV_CRASH_P4);
+        //MSR_RANGE_ADD(MSR_HV_CRASH_CTL);
+
+        /** @todo add more? */
+    }
+    MSR_RANGE_END(64);
+#endif
 
     /** @todo Specify other ranges too? Like hyper-V and KVM to make sure we get
      *        the MSR requests instead of KVM. */
@@ -1557,7 +1669,7 @@ VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
          *       Just try sleeping here for a bit and hope that RTThreadPoke() also works.
          *       Fortunately this seems to be used very rarely.
          */
-        RTThreadSleep(100);
+        //RTThreadSleep(100);
     }
     else
     {
@@ -2212,8 +2324,10 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
             PDMIoApicBroadcastEoi(pVCpu->CTX_SUFF(pVM), pRun->eoi.vector);
             return VINF_SUCCESS;
         case KVM_EXIT_HYPERV:
-            AssertFailed();
-            break;
+            *pfStatefulExit = true;
+            Assert(pRun->hyperv.type == KVM_EXIT_HYPERV_HCALL);
+            pRun->hyperv.u.hcall.result = 0x02;
+            return VINF_SUCCESS;
 
         case KVM_EXIT_DIRTY_RING_FULL:
             AssertFailed();

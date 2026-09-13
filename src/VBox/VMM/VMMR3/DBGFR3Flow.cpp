@@ -240,6 +240,11 @@ DECL_FORCE_INLINE(bool) dbgfR3FlowDisOpcIsUncondJmp(uint16_t uOpc, PDBGFDISSTATE
     RT_NOREF_PV(pDis);
     return uOpc == OP_JMP;
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    RT_NOREF(pDis, uOpc);
+    AssertFailed(); /** @todo */
+    return false;
+
 #else
 # error "port me"
 #endif
@@ -274,6 +279,11 @@ DECL_FORCE_INLINE(bool) dbgfR3FlowDisOpcIsCall(uint16_t uOpc, uint32_t fOpType)
     RT_NOREF_PV(fOpType);
     return uOpc == OP_CALL;
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    RT_NOREF(fOpType, uOpc);
+    AssertFailed(); /** @todo */
+    return false;
+
 #else
 # error "port me"
 #endif
@@ -302,6 +312,11 @@ DECL_FORCE_INLINE(bool) dbgfR3FlowDisOpcIsExit(uint16_t uOpc)
         || uOpc == OP_IRET
         || uOpc == OP_SYSEXIT
         || uOpc == OP_SYSRET;
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    RT_NOREF(uOpc);
+    AssertFailed(); /** @todo */
+    return false;
 
 #else
 # error "port me"
@@ -779,7 +794,7 @@ static int dbgfR3FlowQueryDirectBranchTarget(PUVM pUVM, VMCPUID idCpu, PDISOPPAR
 #ifdef VBOX_VMM_TARGET_X86
     /* Relative to the next instruction. */
     DBGFR3AddrAdd(pAddrJmpTarget, cbInstr);
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     /* Relative to the start of the instruction. */
     RT_NOREF(cbInstr);
 #else

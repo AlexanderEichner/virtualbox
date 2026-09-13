@@ -881,6 +881,10 @@ VMMR3DECL(int) PGMR3Init(PVM pVM)
             pPGM->au64RegTcrEl[idxEl]   = UINT64_MAX;
             pPGM->aenmGuestMode[idxEl]  = PGMMODE_INVALID;
         }
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        /** @todo */
+        RT_NOREF(pVCpu, pPGM);
 #else
 # error "port me"
 #endif
@@ -1103,6 +1107,15 @@ VMMR3DECL(int) PGMR3Init(PVM pVM)
         if (RT_FAILURE(rc))
             break;
     }
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    for (VMCPUID i = 0; i < pVM->cCpus; i++)
+    {
+        PVMCPU pVCpu = pVM->apCpusR3[i];
+
+        /** @todo */ RT_NOREF(pVCpu);
+    }
+
 #else
 # error "Port me"
 #endif /* VBOX_VMM_TARGET_X86 */

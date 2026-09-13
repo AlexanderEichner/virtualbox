@@ -1867,6 +1867,11 @@ static int dbgfR3BpArm(PUVM pUVM, DBGFBP hBp, PDBGFBPINT pBp)
             static const uint8_t  s_BreakpointInstr = 0xcc;
             rc = PGMPhysSimpleReadGCPhys(pVM, &pBp->Pub.u.Sw.Arch.x86.bOrg, pBp->Pub.u.Sw.PhysAddr,
                                          sizeof(pBp->Pub.u.Sw.Arch.x86.bOrg));
+#elif defined(VBOX_VMM_TARGET_RISCV)
+            static const uint32_t s_BreakpointInstr = 0xfffffff;
+            AssertFailed();
+            /** @todo */
+            rc = VINF_SUCCESS;
 #else
 # error "port me"
 #endif
@@ -2031,6 +2036,9 @@ static VBOXSTRICTRC dbgfR3BpHit(PVM pVM, PVMCPU pVCpu, DBGFBP hBp, PDBGFBPINT pB
                     rcStrict = IEMExecOneWithPrefetchedByPC(pVCpu, CPUMGetGuestFlatPC(pVCpu),
                                                             &pBp->Pub.u.Sw.Arch.armv8.u32Org,
                                                             sizeof(pBp->Pub.u.Sw.Arch.armv8.u32Org));
+#elif defined(VBOX_VMM_TARGET_RISCV)
+                    AssertFailed();
+                    /** @todo */
 #else
 # error "port me"
 #endif
