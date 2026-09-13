@@ -151,6 +151,7 @@ class BuildArch:
     X86 = "x86";
     AMD64 = "amd64";
     ARM64 = "arm64";
+    RISCV64 = "riscv64";
     UNKNOWN = "unknown";
 
 # Map to translate the Python architecture to kBuild architecture.
@@ -160,10 +161,11 @@ g_mapPythonArch2BuildArch = {
     "x86_64": BuildArch.AMD64,
     "amd64": BuildArch.AMD64,
     "aarch64": BuildArch.ARM64,
-    "arm64": BuildArch.ARM64
+    "arm64": BuildArch.ARM64,
+    "riscv64": BuildArch.RISCV64
 };
 # Supported build architectures.
-g_aeBuildArchs = [ BuildArch.X86, BuildArch.AMD64, BuildArch.ARM64 ];
+g_aeBuildArchs = [ BuildArch.X86, BuildArch.AMD64, BuildArch.ARM64, BuildArch.RISCV64 ];
 
 # Defines the host architecture (pythonic name).
 g_sHostArch = platform.machine().lower();
@@ -2784,8 +2786,9 @@ class ToolCheck(CheckBase):
         Checks for Open Watcom tools.
         """
 
-        if  self.enmBuildTarget == BuildTarget.DARWIN \
-        and self.enmBuildArch   == BuildArch.ARM64:
+        if  (    self.enmBuildTarget == BuildTarget.DARWIN \
+             and self.enmBuildArch == BuildArch.ARM64) \
+            or self.enmBuildArch   == BuildArch.RISCV64:
             self.printVerbose(1, 'Open Watcom not used here (yet), skipping');
             return True;
 
@@ -3514,7 +3517,7 @@ g_aoLibs = [
     # Note: The required libs for Qt can differ (VBox infix and whatnot), and thus will
     #       be resolved in the check callback.
     LibraryCheck("qt", [ "QtCore/QtGlobal" ], [ ], aeTargets = [ BuildTarget.ANY ],
-                 sCode = '#define IN_RING3\n#include <QtCore/QtGlobal>\nint main() { std::cout << QT_VERSION_STR << std::endl;\n#if QT_VERSION >= 6 * 65536 + 8 * 256\nreturn 0;\n#else\nreturn 1;\n#endif\n}',
+                 sCode = '#define IN_RING3\n#include <QtCore/QtGlobal>\nint main() { std::cout << QT_VERSION_STR << std::endl;\n#if QT_VERSION >= 6 * 65536 + 4 * 256\nreturn 0;\n#else\nreturn 1;\n#endif\n}',
                  fnCallback = LibraryCheck.checkCallback_qt,
                  sSdkName = 'QT6', dictArgsToSetIfFailed = { 'config_libs_disable_qt' : True }),
     LibraryCheck("libsdl2", [ "SDL2/SDL.h" ], [ "libSDL2" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
