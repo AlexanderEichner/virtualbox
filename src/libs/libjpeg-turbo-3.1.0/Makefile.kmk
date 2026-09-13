@@ -59,6 +59,8 @@ VBox-libjpeg_DEFS.amd64 += \
 	SIZEOF_SIZE_T=8
 VBox-libjpeg_DEFS.arm64 += \
 	SIZEOF_SIZE_T=8
+VBox-libjpeg_DEFS.riscv64 += \
+	SIZEOF_SIZE_T=8
 
 VBox-libjpeg_INCS = . simd
 

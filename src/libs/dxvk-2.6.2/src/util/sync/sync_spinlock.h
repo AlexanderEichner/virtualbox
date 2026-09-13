@@ -25,6 +25,8 @@ namespace dxvk::sync {
         _mm_pause();
         #elif defined(DXVK_ARCH_ARM64)
         __asm__ __volatile__ ("yield");
+        #elif defined(DXVK_ARCH_RISCV64)
+        /*__asm__ __volatile__ ("pause");*/
         #else
         #error "Pause/Yield not implemented for this architecture."
         #endif
