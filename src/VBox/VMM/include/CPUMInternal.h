@@ -116,6 +116,8 @@ typedef uint64_t STAMCOUNTER;
 # define CPUM_SAVED_STATE_VERSION               CPUM_SAVED_STATE_VERSION_HWVIRT_CFG
 #elif defined(VBOX_VMM_TARGET_ARMV8)
 # define CPUM_SAVED_STATE_VERSION               CPUM_SAVED_STATE_VERSION_ARMV8_IDREGS2
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# define CPUM_SAVED_STATE_VERSION               CPUM_SAVED_STATE_VERSION_RISCV
 #endif
 
 #if defined(VBOX_VMM_TARGET_X86)
@@ -172,6 +174,11 @@ typedef uint64_t STAMCOUNTER;
 # define CPUM_SAVED_STATE_VERSION_ARMV8_V2      2
 /** The initial ARMv8 saved state. */
 # define CPUM_SAVED_STATE_VERSION_ARMV8_V1      1
+#endif
+
+#if defined(VBOX_VMM_TARGET_RISCV)
+/** The initial RISC-V saved state. */
+# define CPUM_SAVED_STATE_VERSION_RISCV         1
 #endif
 /** @} */
 
@@ -240,6 +247,14 @@ typedef struct CPUMINFO
     /** Number of registers in paIdRegsR3.   */
     uint32_t                    cIdRegs;
 
+    /** The number of system register ranges (CPUMSSREGRANGE) in the array pointed to below. */
+    uint32_t                    cSysRegRanges;
+    /** Pointer to the sysrem register ranges. */
+    R3PTRTYPE(PCPUMSYSREGRANGE) paSysRegRangesR3;
+
+    /** System register ranges. */
+    CPUMSYSREGRANGE             aSysRegRanges[128];
+#elif defined(VBOX_VMM_TARGET_RISCV)
     /** The number of system register ranges (CPUMSSREGRANGE) in the array pointed to below. */
     uint32_t                    cSysRegRanges;
     /** Pointer to the sysrem register ranges. */
@@ -465,6 +480,28 @@ typedef struct CPUM
 
     /** The reset value of the program counter. */
     uint64_t                u64ResetPc;
+
+    /** Guest CPU info. */
+    CPUMINFO                GuestInfo;
+
+    /** @name System register statistics.
+     * @{ */
+    STAMCOUNTER             cSysRegWrites;
+    STAMCOUNTER             cSysRegWritesToIgnoredBits;
+    STAMCOUNTER             cSysRegWritesRaiseExcp;
+    STAMCOUNTER             cSysRegWritesUnknown;
+    STAMCOUNTER             cSysRegReads;
+    STAMCOUNTER             cSysRegReadsRaiseExcp;
+    STAMCOUNTER             cSysRegReadsUnknown;
+    /** @} */
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /** @todo */
+    uint8_t                 abPadding0[6];
+
+    /** The reset value of the program counter. */
+    uint64_t                u64ResetPc;
+    /** The reset value of the X1 register (usually FDT). */
+    uint64_t                u64ResetX1;
 
     /** Guest CPU info. */
     CPUMINFO                GuestInfo;
@@ -713,7 +750,7 @@ DECLHIDDEN(int)     cpumR3DbgInitTarget(PVM pVM);
 DECLCALLBACK(void)  cpumR3InfoGuestHwvirt(PVM pVM, PCDBGFINFOHLP pHlp, const char *pszArgs);
 DECLCALLBACK(void)  cpumR3InfoHyper(PVM pVM, PCDBGFINFOHLP pHlp, const char *pszArgs);
 #  endif
-#  if defined(VBOX_VMM_TARGET_ARMV8)
+#  if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 DECLHIDDEN(int)     cpumR3SysRegStrictInitChecks(void);
 DECLHIDDEN(int)     cpumR3InitCpuId(PVM pVM);
 #  elif defined(VBOX_VMM_TARGET_X86)

@@ -90,7 +90,7 @@ VMMDECL(PGIMMMIO2REGION) GIMGetMmio2Regions(PVMCC pVM, uint32_t *pcRegions)
     *pcRegions = 0;
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_HYPERV:
             return gimHvGetMmio2Regions(pVM, pcRegions);
 #endif
@@ -116,7 +116,7 @@ VMM_INT_DECL(bool) GIMAreHypercallsEnabled(PVMCPUCC pVCpu)
 
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_HYPERV:
             return gimHvAreHypercallsEnabled(pVM);
 
@@ -154,7 +154,7 @@ VMM_INT_DECL(bool) GIMAreHypercallsEnabled(PVMCPUCC pVCpu)
  */
 VMM_INT_DECL(VBOXSTRICTRC) GIMHypercall(PVMCPUCC pVCpu, PCPUMCTX pCtx)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(pCtx);
 #endif
 
@@ -166,7 +166,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMHypercall(PVMCPUCC pVCpu, PCPUMCTX pCtx)
 
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_HYPERV:
             return gimHvHypercall(pVCpu, pCtx);
 
@@ -210,7 +210,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMHypercall(PVMCPUCC pVCpu, PCPUMCTX pCtx)
  */
 VMM_INT_DECL(VBOXSTRICTRC) GIMHypercallEx(PVMCPUCC pVCpu, PCPUMCTX pCtx, unsigned uDisOpcode, uint8_t cbInstr)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(pCtx, uDisOpcode, cbInstr);
 #endif
 
@@ -222,7 +222,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMHypercallEx(PVMCPUCC pVCpu, PCPUMCTX pCtx, unsigne
 
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_HYPERV:
             return gimHvHypercallEx(pVCpu, pCtx, uDisOpcode, cbInstr);
 
@@ -250,7 +250,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMHypercallEx(PVMCPUCC pVCpu, PCPUMCTX pCtx, unsigne
  */
 VMM_INT_DECL(VBOXSTRICTRC) GIMExecHypercallInstr(PVMCPUCC pVCpu, PCPUMCTX pCtx, uint8_t *pcbInstr)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(pCtx);
 #endif
 
@@ -269,7 +269,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMExecHypercallInstr(PVMCPUCC pVCpu, PCPUMCTX pCtx, 
             *pcbInstr = (uint8_t)cbInstr;
         switch (pVM->gim.s.enmProviderId)
         {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
             case GIMPROVIDERID_HYPERV:
                 return gimHvHypercallEx(pVCpu, pCtx, Dis.pCurInstr->uOpcode, Dis.cbInstr);
 
@@ -282,7 +282,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMExecHypercallInstr(PVMCPUCC pVCpu, PCPUMCTX pCtx, 
         }
     }
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
     Log(("GIM: GIMExecHypercallInstr: Failed to disassemble CS:RIP=%04x:%08RX64. rc=%Rrc\n", pCtx->cs.Sel, pCtx->rip, rc));
 #endif
     return rc;
@@ -303,7 +303,7 @@ VMM_INT_DECL(bool) GIMIsParavirtTscEnabled(PVMCC pVM)
 {
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_HYPERV:
             return gimHvIsParavirtTscEnabled(pVM);
 
@@ -337,7 +337,7 @@ VMM_INT_DECL(bool) GIMShouldTrapXcptUD(PVMCPUCC pVCpu)
 
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_KVM:
             return gimKvmShouldTrapXcptUD(pVM);
 
@@ -376,7 +376,7 @@ VMM_INT_DECL(bool) GIMShouldTrapXcptUD(PVMCPUCC pVCpu)
  */
 VMM_INT_DECL(VBOXSTRICTRC) GIMXcptUD(PVMCPUCC pVCpu, PCPUMCTX pCtx, PDISSTATE pDis, uint8_t *pcbInstr)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(pCtx, pDis, pcbInstr);
 #endif
 
@@ -386,7 +386,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMXcptUD(PVMCPUCC pVCpu, PCPUMCTX pCtx, PDISSTATE pD
 
     switch (pVM->gim.s.enmProviderId)
     {
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
         case GIMPROVIDERID_KVM:
             return gimKvmXcptUD(pVM, pVCpu, pCtx, pDis, pcbInstr);
 
@@ -399,7 +399,7 @@ VMM_INT_DECL(VBOXSTRICTRC) GIMXcptUD(PVMCPUCC pVCpu, PCPUMCTX pCtx, PDISSTATE pD
 }
 
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 /**
  * Invokes the read-MSR handler for the GIM provider configured for the VM.
  *

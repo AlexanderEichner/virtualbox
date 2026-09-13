@@ -115,7 +115,9 @@ endif
 #
 # CPU profile
 #
-PROGRAMS += VBoxCpuProfile
+if1of ($(KBUILD_TARGET_ARCH), amd64 x86 arm64)
+ PROGRAMS += VBoxCpuProfile
+endif
 VBoxCpuProfile_TEMPLATE := VBoxR3Tool
 VBoxCpuProfile_SOURCES  := VBoxCpuProfile.cpp
 

@@ -606,7 +606,7 @@ static DECLCALLBACK(int) dbgfR3PagingDumpEx(PUVM pUVM, VMCPUID idCpu, uint32_t f
                 AssertCompile(DBGFPGDMP_FLAGS_LME == MSR_K6_EFER_LME);  AssertCompile(DBGFPGDMP_FLAGS_NXE == MSR_K6_EFER_NXE);
                 fFlags |= CPUMGetGuestEFER(pVCpu) & (MSR_K6_EFER_LME | MSR_K6_EFER_NXE);
             }
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             /** @todo arm64: port me   */
             AssertReleaseFailed();
             return VERR_NOT_IMPLEMENTED;

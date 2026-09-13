@@ -55,6 +55,9 @@ static const VMMR3VTABLE g_VMMR3VTable =
 #elif defined(VBOX_VMM_TARGET_ARMV8)
     /* .fFlags = */             VMMR3VTABLE_F_TARGET_ARMV8,
     /* .pszDescription = */     "armv8",
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    /* .fFlags = */             VMMR3VTABLE_F_TARGET_RISCV,
+    /* .pszDescription = */     "riscv",
 #else
 # error "port me"
 #endif

@@ -48,6 +48,8 @@
 #endif
 #if defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
 # include <iprt/asm-arm.h>
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+# include <iprt/asm-riscv.h>
 #endif
 
 RT_C_DECLS_BEGIN
@@ -67,7 +69,7 @@ RT_C_DECLS_BEGIN
  *
  * @param   u64     The 64-bit variable which the timestamp shall be saved in.
  */
-#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32) || defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
 #  define STAM_GET_TS(u64) do { (u64) = ASMReadTSC(); } while (0)
 #elif defined(__GNUC__)
 # if defined(RT_ARCH_X86)

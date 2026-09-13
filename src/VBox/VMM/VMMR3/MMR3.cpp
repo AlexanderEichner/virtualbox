@@ -170,7 +170,7 @@ Hypervisor Memory Area (HMA) Layout: Base 00000000a0000000, 0x00800000 bytes
 #include <iprt/alloc.h>
 #include <iprt/assert.h>
 #include <iprt/string.h>
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # include <iprt/file.h>
 #endif
 
@@ -270,7 +270,7 @@ VMMR3DECL(int) MMR3Init(PVM pVM)
     return rc;
 }
 
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 
 /**
  * Initializes the given RAM range with data from the given file.
@@ -326,7 +326,7 @@ static int mmR3RamRegionInitFromFile(PVM pVM, RTGCPHYS GCPhysStart, const char *
  *       Every SoC can have multiple RAM regions scattered across the whole
  *       address space so we have to be much more flexible here.
  */
-static int mmR3InitRamArmV8(PVM pVM, PCFGMNODE pMMCfg)
+static int mmR3InitRamArmV8RiscV(PVM pVM, PCFGMNODE pMMCfg)
 {
     int rc = VINF_SUCCESS;
     PCFGMNODE pMemRegions = CFGMR3GetChild(pMMCfg, "MemRegions");
@@ -552,8 +552,8 @@ VMMR3DECL(int) MMR3InitPaging(PVM pVM)
         AssertRCReturn(rc, rc);
     }
 
-#ifdef VBOX_VMM_TARGET_ARMV8
-    rc = mmR3InitRamArmV8(pVM, pMMCfg);
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
+    rc = mmR3InitRamArmV8RiscV(pVM, pMMCfg);
 #elif defined(VBOX_VMM_TARGET_X86)
     rc = mmR3InitRamX86(pVM, pMMCfg);
 #else

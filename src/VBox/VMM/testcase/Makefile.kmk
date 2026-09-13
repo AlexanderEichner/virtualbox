@@ -694,6 +694,8 @@ tstIEMAImplDataSseBinary.asm_DEPS = \
 tstIEMAImpl_SOURCES.arm64  = \
 	tstIEMAImplDataSseBinary.S \
 	../VMMAll/target-x86/IEMAllAImpl-x86-arm64.S
+tstIEMAImpl_SOURCES.riscv64  = \
+	tstIEMAImplDataSseBinary.S
 tstIEMAImplDataSseBinary.S_DEPS   = \
 	$(TSTIEMAIMPL_TEST_DATA_DEPS)
 $(call KB_FN_DO_PASS0_ON_TARGET,tstIEMAImpl)
@@ -1062,16 +1064,17 @@ endif
 #
 # PGM RAM Range Lookup tests and other unit tests...
 #
-tstVMMUnitTests-1_TEMPLATE  := VBoxR3Exe
-tstVMMUnitTests-1_SDKS      := VBoxSoftFloatR3Shared
-tstVMMUnitTests-1_DEFS       = IN_VMM_R3 $(filter-out VBOX_WITH_DEBUGGER VBOX_WITH_IEM_RECOMPILER VBOX_WITH_IEM_NATIVE_RECOMPILER,$(VMM_COMMON_DEFS))
-tstVMMUnitTests-1_DEFS.amd64 = VBOX_VMM_TARGET_X86
-tstVMMUnitTests-1_DEFS.arm64 = VBOX_VMM_TARGET_ARMV8
-tstVMMUnitTests-1_INCS       = $(VBOX_PATH_VMM_SRC)/include
-tstVMMUnitTests-1_SOURCES   := \
+tstVMMUnitTests-1_TEMPLATE    := VBoxR3Exe
+tstVMMUnitTests-1_SDKS        := VBoxSoftFloatR3Shared
+tstVMMUnitTests-1_DEFS         = IN_VMM_R3 $(filter-out VBOX_WITH_DEBUGGER VBOX_WITH_IEM_RECOMPILER VBOX_WITH_IEM_NATIVE_RECOMPILER,$(VMM_COMMON_DEFS))
+tstVMMUnitTests-1_DEFS.amd64   = VBOX_VMM_TARGET_X86
+tstVMMUnitTests-1_DEFS.arm64   = VBOX_VMM_TARGET_ARMV8
+tstVMMUnitTests-1_DEFS.riscv64 = VBOX_VMM_TARGET_RISCV
+tstVMMUnitTests-1_INCS         = $(VBOX_PATH_VMM_SRC)/include
+tstVMMUnitTests-1_SOURCES     := \
 	tstVMMUnitTests-1.cpp \
 	tstPGM-1.cpp
-tstVMMUnitTests-1_LIBS      := \
+tstVMMUnitTests-1_LIBS        := \
 	$(PATH_STAGE_LIB)/VMMStatic$(VBOX_SUFF_LIB) \
 	$(PATH_STAGE_LIB)/DisasmR3$(VBOX_SUFF_LIB) \
 	$(LIB_RUNTIME)

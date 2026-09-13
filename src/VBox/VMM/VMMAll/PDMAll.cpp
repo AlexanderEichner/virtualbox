@@ -49,7 +49,7 @@
 #include "dtrace/VBoxVMM.h"
 
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 /**
  * Gets the pending interrupt.
  *

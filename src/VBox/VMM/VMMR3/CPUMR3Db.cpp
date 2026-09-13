@@ -39,7 +39,7 @@
 #if defined(VBOX_VMM_TARGET_ARMV8) || defined(RT_ARCH_ARM64)
 # include <iprt/armv8.h>
 #endif
-#if !defined(RT_ARCH_ARM64)
+#if !defined(RT_ARCH_ARM64) && !defined(RT_ARCH_RISCV64)
 # include <iprt/asm-amd64-x86.h>
 #endif
 #include <iprt/mem.h>
@@ -260,6 +260,13 @@ static CPUMDBENTRY const * const g_apCpumDbEntries[] =
     &g_Entry_ARM_Qualcomm_Snapdragon_X.Core,
     &g_Entry_ARM_ARM_Cortex_X925_A725.Core,
 #endif /* VBOX_VMM_TARGET_ARMV8 || RT_ARCH_ARM64 */
+
+#if defined(VBOX_VMM_TARGET_RISCV) || defined(RT_ARCH_RISCV64)
+    /*
+     * RISC-V profiles:
+     */
+    NULL,
+#endif /* VBOX_VMM_TARGET_RISCV || RT_ARCH_RISCV64 */
 };
 
 
@@ -1029,6 +1036,19 @@ static int cpumR3DbCreateHostEntry(PVM pVM, PCPUMINFO pInfo)
 }
 #endif /* VBOX_VMM_TARGET_ARMV8 && RT_ARCH_ARM64 */
 
+#if defined(VBOX_VMM_TARGET_RISCV) && defined(RT_ARCH_RISCV64)
+/**
+ * ARMv8 version of helper that picks a DB entry for the host and merges it with
+ * available info in the @a pInfo structure.
+ */
+static int cpumR3DbCreateHostEntry(PVM pVM, PCPUMINFO pInfo)
+{
+    /** @todo */
+    RT_NOREF(pVM, pInfo);
+    return VINF_SUCCESS;
+}
+#endif /* VBOX_VMM_TARGET_RISCV && RT_ARCH_RISCV */
+
 
 #ifdef VBOX_VMM_TARGET_X86
 /**
@@ -1140,6 +1160,16 @@ static int cpumDbPopulateInfoFromEntry(PCPUMINFO pInfo, PCCPUMDBENTRY pEntryCore
     return VINF_SUCCESS;
 }
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+/**
+ * ARMv8 version of helper that populates the CPUMINFO structure from DB entry.
+ */
+static int cpumDbPopulateInfoFromEntry(PCPUMINFO pInfo, PCCPUMDBENTRY pEntryCore, bool fHost, unsigned const idxVar = 0)
+{
+    /** @todo */
+    RT_NOREF(pInfo, pEntryCore, fHost, idxVar);
+    return VINF_SUCCESS;
+}
 #else
 # error "port me"
 #endif
@@ -1151,6 +1181,8 @@ DECLHIDDEN(int) cpumR3DbGetCpuInfo(PVM pVM, const char *pszName, PCPUMINFO pInfo
     CPUMDBENTRYTYPE const enmEntryType = CPUMDBENTRYTYPE_X86;
 #elif defined(VBOX_VMM_TARGET_ARMV8)
     CPUMDBENTRYTYPE const enmEntryType = CPUMDBENTRYTYPE_ARM;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    CPUMDBENTRYTYPE const enmEntryType = CPUMDBENTRYTYPE_RISCV;
 #else
 # error "port me"
 #endif
@@ -1164,7 +1196,8 @@ DECLHIDDEN(int) cpumR3DbGetCpuInfo(PVM pVM, const char *pszName, PCPUMINFO pInfo
     if (!strcmp(pszName, "host"))
     {
 #if (defined(VBOX_VMM_TARGET_X86) && (defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86))) \
- || (defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_ARCH_ARM64))
+ || (defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_ARCH_ARM64)) \
+ || (defined(VBOX_VMM_TARGET_RISCV) && defined(RT_ARCH_RISCV64))
         return cpumR3DbCreateHostEntry(pVM, pInfo);
 #else
         Assert(g_apCpumDbEntries[0]->enmEntryType == enmEntryType);

@@ -273,7 +273,8 @@ typedef enum VMTARGET
 {
     VMTARGET_INVALID = 0,
     VMTARGET_X86     = 0x8086,
-    VMTARGET_ARMV8   = 0xaa64
+    VMTARGET_ARMV8   = 0xaa64,
+    VMTARGET_RISCV   = 0xa164,
 } VMTARGET;
 
 /** @def VMTARGET_DEFAULT
@@ -283,6 +284,8 @@ typedef enum VMTARGET
 # define VMTARGET_DEFAULT   VMTARGET_X86
 #elif defined(VBOX_VMM_TARGET_ARMV8)
 # define VMTARGET_DEFAULT   VMTARGET_ARMV8
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# define VMTARGET_DEFAULT   VMTARGET_RISCV
 #endif
 
 /** @def VMTARGET_NATIVE
@@ -291,6 +294,8 @@ typedef enum VMTARGET
 # define VMTARGET_NATIVE    VMTARGET_X86
 #elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
 # define VMTARGET_NATIVE    VMTARGET_ARMV8
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+# define VMTARGET_NATIVE    VMTARGET_RISCV
 #endif
 
 
@@ -1197,6 +1202,10 @@ typedef enum CPUMMODE
     CPUMMODE_ARMV8_AARCH64,
     /** ARMv8 - AARCH32 mode. */
     CPUMMODE_ARMV8_AARCH32,
+    /** RISC-V - RV64 mode. */
+    CPUMMODE_RISCV_RV64,
+    /** RISC-V - RV32 mode. */
+    CPUMMODE_RISCV_RV32,
     /** hack forcing the size of the enum to 32-bits. */
     CPUMMODE_32BIT_HACK = 0x7fffffff
 } CPUMMODE;
@@ -1220,6 +1229,14 @@ typedef enum DISCPUMODE
     DISCPUMODE_ARMV8_A32,
     /** AArch32 T32 (aka Thumb) instruction set. */
     DISCPUMODE_ARMV8_T32,
+    /** @} */
+
+    /** @name RISC-V modes.
+     * @{ */
+    /** RISC-V RV64 instruction set. */
+    DISCPUMODE_RISCV_RV64,
+    /** RISC-V RV32 instruction set. */
+    DISCPUMODE_RISCV_RV32,
     /** @} */
 
     /** hack forcing the size of the enum to 32-bits. */

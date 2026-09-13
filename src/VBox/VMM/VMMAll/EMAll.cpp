@@ -127,7 +127,7 @@ VMMDECL(bool) EMAreHypercallInstructionsEnabled(PVMCPU pVCpu)
 }
 
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 /**
  * Prepare an MWAIT - essentials of the MONITOR instruction.
  *
@@ -950,7 +950,7 @@ static DECLCALLBACK(int) emReadBytes(PDISSTATE pDis, uint8_t offInstr, uint8_t c
         }
         if (RT_FAILURE(rc))
         {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             AssertReleaseFailed();
 #else
             /*
@@ -985,7 +985,7 @@ static DECLCALLBACK(int) emReadBytes(PDISSTATE pDis, uint8_t offInstr, uint8_t c
  */
 VMM_INT_DECL(int) EMInterpretDisasCurrent(PVMCPUCC pVCpu, PDISSTATE pDis, unsigned *pcbInstr)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     return EMInterpretDisasOneEx(pVCpu, (RTGCUINTPTR)CPUMGetGuestFlatPC(pVCpu), pDis, pcbInstr);
 #else
     PCPUMCTX pCtx = CPUMQueryGuestCtxPtr(pVCpu);
@@ -1048,7 +1048,7 @@ VMM_INT_DECL(int) EMInterpretDisasOneEx(PVMCPUCC pVCpu, RTGCUINTPTR GCPtrInstr, 
  */
 VMM_INT_DECL(VBOXSTRICTRC) EMInterpretInstruction(PVMCPUCC pVCpu)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     LogFlow(("EMInterpretInstruction %RGv\n", (RTGCPTR)CPUMGetGuestFlatPC(pVCpu)));
 #else
     LogFlow(("EMInterpretInstruction %RGv\n", (RTGCPTR)CPUMGetGuestRIP(pVCpu)));

@@ -2394,6 +2394,9 @@ VMMR3_INT_DECL(void) VMMR3InitR0StackUnwindState(PUVM pUVM, VMCPUID idCpu, struc
 #elif defined(RT_ARCH_ARM64)
     /** @todo PORTME: arm ring-0  */
 
+#elif defined(RT_ARCH_RISCV64)
+    /** @todo PORTME: arm ring-0  */
+
 #else
 # error "Port me"
 #endif
@@ -2570,6 +2573,9 @@ static DECLCALLBACK(void) vmmR3InfoFF(PVM pVM, PCDBGFINFOHLP pHlp, const char *p
 #elif defined(VBOX_VMM_TARGET_X86)
         PRINT_FLAG(VMCPU_FF_,INTERRUPT_APIC);
         PRINT_FLAG(VMCPU_FF_,INTERRUPT_PIC);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        AssertFailed();
+        /** @todo */
 #else
 # error "port me"
 #endif

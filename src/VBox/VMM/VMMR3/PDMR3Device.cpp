@@ -733,6 +733,11 @@ static int pdmR3DevLoadModules(PVM pVM)
 # endif
 #endif
 
+#ifdef VBOX_VMM_TARGET_RISCV
+    /** @todo Register APLIC */
+    int rc;
+#endif
+
     /*
      * Load the builtin module.
      */

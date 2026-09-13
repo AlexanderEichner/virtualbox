@@ -77,7 +77,7 @@ static void iemR3RegisterDebuggerCommands(void);
 #endif
 
 
-#if !defined(VBOX_VMM_TARGET_ARMV8)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 static const char *iemGetTargetCpuName(uint32_t enmTargetCpu)
 {
     switch (enmTargetCpu)
@@ -241,7 +241,7 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
         ITLBS(pVCpu).Code.GlobalLargePageRange.uFirstTag    = UINT64_MAX;
         ITLBS(pVCpu).Data.NonGlobalLargePageRange.uFirstTag = UINT64_MAX;
         ITLBS(pVCpu).Data.GlobalLargePageRange.uFirstTag    = UINT64_MAX;
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         ITLBS(pVCpu).Code.uTlbPhysRevAndStuff0 = ITLBS(pVCpu).Data.uTlbPhysRevAndStuff0 = uInitialTlbPhysRev | IEMTLBE_F_NG;
         ITLBS(pVCpu).Code.uTlbPhysRevAndStuff1 = ITLBS(pVCpu).Data.uTlbPhysRevAndStuff1 = uInitialTlbPhysRev | IEMTLBE_F_NG;
         ITLBS(pVCpu).Code.LargePageRange.uFirstTag = UINT64_MAX;
@@ -276,7 +276,7 @@ VMMR3_INT_DECL(int) IEMR3Init(PVM pVM)
             ICORE(pVCpu).aidxTargetCpuEflFlavour[1]   = ICORE(pVCpu).aidxTargetCpuEflFlavour[0];
 #endif
 
-#if !defined(VBOX_VMM_TARGET_ARMV8) && (IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC)
+#if !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV) && (IEM_CFG_TARGET_CPU == IEMTARGETCPU_DYNAMIC)
             switch (pVM->cpum.ro.GuestFeatures.enmMicroarch)
             {
                 case kCpumMicroarch_Intel_8086:     ICORE(pVCpu).uTargetCpu = IEMTARGETCPU_8086; break;
@@ -1323,9 +1323,9 @@ static void iemR3InfoTlbPrintHeader(PVMCPU pVCpu, PCDBGFINFOHLP pHlp, IEMTLB con
 static void iemR3InfoTlbPrintSlot(PVMCPU pVCpu, PCDBGFINFOHLP pHlp, IEMTLB const *pTlb, IEMTLBENTRY const *pTlbe,
                                   uint32_t uSlot, uint32_t fFlags)
 {
-#ifndef VBOX_VMM_TARGET_ARMV8
+#ifdef VBOX_VMM_TARGET_X86
     uint64_t const uTlbRevision = !(uSlot & 1) ? pTlb->uTlbRevision : pTlb->uTlbRevisionGlobal;
-#else
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     uint64_t const uTlbRevision = pTlb->uTlbRevision;
 #endif
     if ((fFlags & IEMR3INFOTLB_F_ONLY_VALID) && (pTlbe->uTag & IEMTLB_REVISION_MASK) != uTlbRevision)
@@ -1405,7 +1405,7 @@ static void iemR3InfoTlbPrintSlot(PVMCPU pVCpu, PCDBGFINFOHLP pHlp, IEMTLB const
                         : WalkFast.fEffective & X86_PTE_D  ? " dirty-now"    : " dirty-no-more",
                         (~WalkFast.fEffective & X86_PTE_A)  == (pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PT_NO_ACCESSED) ? ""
                         : WalkFast.fEffective & X86_PTE_A  ? " accessed-now" : " accessed-no-more");
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         else
             RTStrPrintf(szTmp, sizeof(szTmp), " stale(todo)");
 #else
@@ -1504,6 +1504,10 @@ static void iemR3InfoTlbPrintSlot(PVMCPU pVCpu, PCDBGFINFOHLP pHlp, IEMTLB const
                     (pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == (uTlbPhysRevAndStuff & IEMTLBE_F_PHYS_REV) ? "phys-valid"
                     : (pTlbe->fFlagsAndPhysRev & IEMTLBE_F_PHYS_REV) == 0 ? "phys-empty" : "phys-expired",
                     pszValid);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    AssertFailed();
+    /** @todo */
+    RT_NOREF(pHlp, uSlot);
 #else
 # error "port me"
 #endif

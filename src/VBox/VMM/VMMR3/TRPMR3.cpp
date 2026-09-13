@@ -402,7 +402,7 @@ VMMR3DECL(int) TRPMR3InjectEvent(PVM pVM, PVMCPU pVCpu, TRPMEVENT enmEvent, bool
     if (RT_SUCCESS(rc))
     {
         *pfInjected = true;
-# ifdef RT_OS_WINDOWS
+# if defined(RT_OS_WINDOWS) || defined(RT_OS_LINUX)
         if (!VM_IS_NEM_ENABLED(pVM))
         {
 # endif
@@ -423,7 +423,7 @@ VMMR3DECL(int) TRPMR3InjectEvent(PVM pVM, PVMCPU pVCpu, TRPMEVENT enmEvent, bool
 # endif
             rc = TRPMAssertTrap(pVCpu, u8Interrupt, TRPM_HARDWARE_INT);
             AssertRC(rc);
-# ifdef RT_OS_WINDOWS
+# if defined(RT_OS_WINDOWS) || defined(RT_OS_LINUX)
         }
         else
         {

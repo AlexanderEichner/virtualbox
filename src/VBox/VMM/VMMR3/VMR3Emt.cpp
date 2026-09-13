@@ -1183,14 +1183,19 @@ VMMR3_INT_DECL(int) VMR3WaitHalted(PVM pVM, PVMCPU pVCpu, uint32_t fFlags)
     /*
      * Check Relevant FFs.
      */
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8)
     const uint64_t fMaskIrqs = ((fFlags & VMWAITHALTED_F_IGNORE_IRQS) ? VMCPU_FF_INTERRUPT_IRQ : 0)
                                    | ((fFlags & VMWAITHALTED_F_IGNORE_FIQS) ? VMCPU_FF_INTERRUPT_FIQ : 0);
     const uint64_t fMask     = VMCPU_FF_EXTERNAL_HALTED_MASK & ~fMaskIrqs;
-#else
+#elif defined(VBOX_VMM_TARGET_X86)
     const uint64_t fMask     = !(fFlags & VMWAITHALTED_F_IGNORE_IRQS)
         ? VMCPU_FF_EXTERNAL_HALTED_MASK
         : VMCPU_FF_EXTERNAL_HALTED_MASK & ~(VMCPU_FF_UPDATE_APIC | VMCPU_FF_INTERRUPT_APIC | VMCPU_FF_INTERRUPT_PIC);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    const uint64_t fMaskIrqs = ((fFlags & VMWAITHALTED_F_IGNORE_IRQS) ? 0 : 0); /** @todo Interrupts */
+    const uint64_t fMask     = VMCPU_FF_EXTERNAL_HALTED_MASK & ~fMaskIrqs;
+#else
+# error "Port me"
 #endif
 
     if (    VM_FF_IS_ANY_SET(pVM, VM_FF_EXTERNAL_HALTED_MASK)

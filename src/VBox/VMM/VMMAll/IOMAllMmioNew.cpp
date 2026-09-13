@@ -1098,7 +1098,7 @@ VMMDECL(int) IOMMmioMapMmio2Page(PVMCC pVM, PPDMDEVINS pDevIns, IOMMMIOHANDLE hR
     AssertReturn(fPageFlags == (X86_PTE_RW | X86_PTE_P), VERR_INVALID_PARAMETER);
     AssertReturn(pDevIns, VERR_INVALID_POINTER);
 
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     /** @todo NEM: MMIO page aliasing. */
     RT_NOREF(pVM, hRegion, offRegion, hMmio2, offMmio2);
     return VINF_SUCCESS;    /* ignore */ /** @todo return some indicator if we fail here */
@@ -1269,7 +1269,7 @@ VMMDECL(int) IOMMmioResetRegion(PVMCC pVM, PPDMDEVINS pDevIns, IOMMMIOHANDLE hRe
     Log(("IOMMMIOResetRegion %#RX64\n", hRegion));
     AssertReturn(pDevIns, VERR_INVALID_POINTER);
 
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     /** @todo NEM: MMIO page aliasing. */
     RT_NOREF(pVM, hRegion);
     return VINF_SUCCESS;    /* ignore */ /** @todo return some indicator if we fail here */

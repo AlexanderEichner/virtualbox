@@ -196,7 +196,7 @@ typedef struct EMCPU
     {
         /** Padding used in the other rings.
          * This must be larger than jmp_buf on any supported platform. */
-#if defined(RT_OS_LINUX) && defined(RT_ARCH_ARM64)
+#if defined(RT_OS_LINUX) && (defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64))
         char                achPaddingFatalLongJump[512];
 #else
         char                achPaddingFatalLongJump[256];

@@ -61,7 +61,8 @@
 
 #if !defined(VBOX_VMM_TARGET_AGNOSTIC) \
  && !defined(VBOX_VMM_TARGET_X86) \
- && !defined(VBOX_VMM_TARGET_ARMV8)
+ && !defined(VBOX_VMM_TARGET_ARMV8) \
+ && !defined(VBOX_VMM_TARGET_RISCV)
 # error "VMM target not defined"
 #endif
 
@@ -319,6 +320,14 @@ typedef struct VMCPU
 # endif
             uint8_t             padding[3840];      /* multiple of 64 */
         } apic;
+#endif
+#if defined(VBOX_VMM_TARGET_RISCV) || defined(VBOX_VMM_TARGET_AGNOSTIC)
+        /** GIC part. */
+        union
+        {
+            /** @todo */
+            uint8_t             padding[3840];      /* multiple of 64 */
+        } plic;
 #endif
     };
 
@@ -647,11 +656,14 @@ AssertCompileSizeAlignment(VMCPU, 16384);
                                                  | VMCPU_FF_REQUEST       | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI \
                                                  | VMCPU_FF_UNHALT        | VMCPU_FF_TIMER          | VMCPU_FF_DBGF \
                                                  | VMCPU_FF_VTIMER_ACTIVATED)
-# else
+# elif defined(VBOX_VMM_TARGET_X86)
 #  define VMCPU_FF_EXTERNAL_HALTED_MASK         (  VMCPU_FF_UPDATE_APIC | VMCPU_FF_INTERRUPT_APIC | VMCPU_FF_INTERRUPT_PIC \
                                                  | VMCPU_FF_REQUEST     | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI \
                                                  | VMCPU_FF_UNHALT      | VMCPU_FF_TIMER          | VMCPU_FF_DBGF \
                                                  | VMCPU_FF_INTERRUPT_NESTED_GUEST)
+# elif defined(VBOX_VMM_TARGET_RISCV)
+#  define VMCPU_FF_EXTERNAL_HALTED_MASK         (  VMCPU_FF_REQUEST       | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI \
+                                                 | VMCPU_FF_UNHALT        | VMCPU_FF_TIMER          | VMCPU_FF_DBGF) /** @todo Interrupts */
 # endif
 #endif
 
@@ -664,12 +676,17 @@ AssertCompileSizeAlignment(VMCPU, 16384);
 # if defined(VBOX_VMM_TARGET_ARMV8)
 #  define VMCPU_FF_HIGH_PRIORITY_PRE_MASK       (  VMCPU_FF_TIMER        | VMCPU_FF_INTERRUPT_IRQ     | VMCPU_FF_INTERRUPT_FIQ \
                                                  | VMCPU_FF_DBGF         | VMCPU_FF_VTIMER_ACTIVATED)
-# else
+# elif defined(VBOX_VMM_TARGET_X86)
 #  define VMCPU_FF_HIGH_PRIORITY_PRE_MASK       (  VMCPU_FF_TIMER        | VMCPU_FF_INTERRUPT_APIC     | VMCPU_FF_INTERRUPT_PIC \
                                                  | VMCPU_FF_UPDATE_APIC  | VMCPU_FF_DBGF \
                                                  | VMCPU_FF_PGM_SYNC_CR3 | VMCPU_FF_PGM_SYNC_CR3_NON_GLOBAL \
                                                  | VMCPU_FF_INTERRUPT_NESTED_GUEST | VMCPU_FF_VMX_MTF  | VMCPU_FF_VMX_APIC_WRITE \
                                                  | VMCPU_FF_VMX_PREEMPT_TIMER | VMCPU_FF_VMX_NMI_WINDOW | VMCPU_FF_VMX_INT_WINDOW )
+# elif defined(VBOX_VMM_TARGET_RISCV)
+#  define VMCPU_FF_HIGH_PRIORITY_PRE_MASK       (  VMCPU_FF_TIMER \
+                                                 | VMCPU_FF_DBGF) /** @todo Interrupts */
+# else
+#  error "Port me"
 # endif
 #endif
 
@@ -1644,6 +1661,13 @@ typedef struct VM
 # endif
             uint8_t     padding[320];   /* multiple of 8 */
         } apic;
+#endif
+#if defined(VBOX_VMM_TARGET_RISCV) || defined(VBOX_VMM_TARGET_AGNOSTIC)
+        union
+        {
+            /** @todo */
+            uint8_t     padding[128];   /* multiple of 8 */
+        } aplic;
 #endif
     };
 

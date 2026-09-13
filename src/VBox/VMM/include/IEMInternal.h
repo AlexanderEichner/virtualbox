@@ -125,7 +125,7 @@ RT_C_DECLS_BEGIN
 
 /** @def IEMNATIVE_WITH_SIMD_FP_NATIVE_EMITTERS
  * Enable this to use native emitters for certain SIMD FP operations. */
-#if 1 || defined(DOXYGEN_RUNNING)
+#if !defined(RT_ARCH_RISCV64) || defined(DOXYGEN_RUNNING)
 # define IEMNATIVE_WITH_SIMD_FP_NATIVE_EMITTERS
 #endif
 
@@ -571,7 +571,7 @@ typedef IEMTLBENTRY const *PCIEMTLBENTRY;
 # define IEMTLBE_F_PG_CODE_PAGE     RT_BIT_64(10) /**< Phys page:   Code page. */
 # define IEMTLBE_F_PHYS_REV         UINT64_C(0xfffffffffffff800) /**< Physical revision mask. @sa IEMTLB_PHYS_REV_INCR */
 #endif
-#if defined(VBOX_VMM_TARGET_ARMV8) || defined(DOXYGEN_RUNNING)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV) || defined(DOXYGEN_RUNNING)
 /** Stage 1+2: No unprivileged read access. */
 # define IEMTLBE_F_EFF_P_NO_READ_BIT        0
 # define IEMTLBE_F_EFF_P_NO_READ            RT_BIT_64(IEMTLBE_F_EFF_P_NO_READ_BIT)
@@ -758,7 +758,7 @@ AssertCompile(RT_BIT_32(IEMTLB_ENTRY_COUNT_AS_POWER_OF_TWO) == IEMTLB_ENTRY_COUN
 # define IEMTLBE_IS_GLOBAL(a_pTlbe)      (((uintptr_t)(a_pTlbe) / sizeof(IEMTLBENTRY)) & 1)
 #endif
 
-#if defined(VBOX_VMM_TARGET_ARMV8) || defined(DOXYGEN_RUNNING)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV) || defined(DOXYGEN_RUNNING)
 /** The 'stuff' bits in uTlbPhysRevAndStuff0 and uTlbPhysRevAndStuff1.
  *
  * These are copies of translation regime, ASID and VMID as well as a
@@ -775,7 +775,7 @@ AssertCompile(RT_BIT_32(IEMTLB_ENTRY_COUNT_AS_POWER_OF_TWO) == IEMTLB_ENTRY_COUN
  */
 typedef struct IEMTLB
 {
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     /** Same as uTlbPhysRevAndStuff1, but with the ASID for the 2nd translation root
      *  (i.e. negative addresses).
      * @note This is placed before uTlbRevision, so we can use a load pair on
@@ -810,7 +810,7 @@ typedef struct IEMTLB
      *       different ASID values there (soon).
      * @todo Why is this volatile again?
      */
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     uint64_t            uTlbPhysRevAndStuff1;
 #else
     uint64_t volatile   uTlbPhysRev;
@@ -955,7 +955,7 @@ AssertCompile(IEMTLB_ENTRY_COUNT * IEMTLB_ENTRY_COUNT_FACTOR >= 64 /* bmLargePag
  * @sa IEMTLBE_F_PHYS_REV */
 #if defined(VBOX_VMM_TARGET_X86) || defined(DOXYGEN_RUNNING)
 # define IEMTLB_PHYS_REV_INCR   RT_BIT_64(11)
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define IEMTLB_PHYS_REV_INCR   RT_BIT_64(54)
 #endif
 #ifdef IEMTLBE_F_PHYS_REV
@@ -972,7 +972,7 @@ AssertCompile(IEMTLBE_F_PHYS_REV == ~(IEMTLB_PHYS_REV_INCR - 1U));
  *                      we'll end up with mostly zeros).
  * @todo ARM: Support 52-bit and 56-bit address space size (FEAT_LVA,
  *       FEAT_LVA3) when we see hardware supporting such.  */
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # if 0 /** @todo ARMv8: page size and TLB */
 # define IEMTLB_CALC_TAG_NO_REV(a_pVCpu, a_GCPtr)   ( (((a_GCPtr) << 16) >> (IEM_F_ARM_GET_TLB_PAGE_SHIFT(ICORE(pVCpu).fExec) + 16)) )
 # else
@@ -2106,7 +2106,7 @@ typedef IEMTBCACHE *PIEMTBCACHE;
  *          another entry for safety, ignoring the memcpy instructions for now. */
 #if defined(VBOX_VMM_TARGET_X86) || defined(DOXYGEN_RUNNING) /* for now: */ || defined(VBOX_VMM_TARGET_AGNOSTIC)
 # define IEM_MAX_MEM_MAPPINGS       3
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define IEM_MAX_MEM_MAPPINGS       2
 #else
 # error "port me"
@@ -2120,7 +2120,7 @@ typedef IEMTBCACHE *PIEMTBCACHE;
  * @arm     Currently we shouldn't need more than 64 bytes here (ld64b, ld4). */
 #if defined(VBOX_VMM_TARGET_X86) || defined(DOXYGEN_RUNNING) /* for now: */ || defined(VBOX_VMM_TARGET_AGNOSTIC)
 # define IEM_BOUNCE_BUFFER_SIZE     512
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
 # define IEM_BOUNCE_BUFFER_SIZE     64
 #else
 # error "port me"

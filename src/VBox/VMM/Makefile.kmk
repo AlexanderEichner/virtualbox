@@ -630,6 +630,187 @@ ifdef VBOX_WITH_VIRT_ARMV8
  VBoxVMMArm_LDFLAGS.darwin = -install_name $(VBOX_DYLD_EXECUTABLE_PATH)/VBoxVMMArm.dylib
 endif
 
+ifdef VBOX_WITH_VIRT_RISCV
+ #
+ # The VMM DLL - RISC-V variant.
+ #
+ ifndef VBOX_ONLY_BUILD
+  DLLS += VBoxVMMRiscv
+ endif
+ VBoxVMMRiscv_TEMPLATE = VBoxR3DllNoPic
+ VBoxVMMRiscv_SONAME.linux = VBoxVMMRiscv.so
+
+ VBoxVMMRiscv_DEFS     = VBOX_VMM_TARGET_RISCV VBOX_DIS_WITH_RISCV VBOX_IN_VMM IN_VMM_R3 IN_DIS IN_DBG \
+ 	$(filter-out \
+ 		VBOX_WITH_HWVIRT \
+ 		VBOX_WITH_PAGE_SHARING \
+ 		$(if-expr "$(KBUILD_TARGET_ARCH)" != "riscv64",VBOX_WITH_NATIVE_NEM,) \
+ 		VBOX_WITH_IEM_RECOMPILER \
+ 		VBOX_WITH_IEM_NATIVE_RECOMPILER \
+ 		VBOX_WITH_NESTED_HWVIRT_SVM \
+ 		VBOX_WITH_NESTED_HWVIRT_VMX \
+ 		VBOX_WITH_NESTED_HWVIRT_VMX_EPT \
+ 		IEM_WITH_3DNOW \
+ 		IEM_WITH_THREE_0F_38 \
+ 		IEM_WITH_THREE_0F_3A \
+ 		IEM_WITH_VEX \
+ 		,$(VMM_COMMON_DEFS))
+ ifdef VBOX_WITH_VUSB
+  VBoxVMMRiscv_DEFS   += VBOX_WITH_USB
+ endif
+ ifdef VBOX_WITH_PDM_ASYNC_COMPLETION
+  VBoxVMMRiscv_DEFS   += VBOX_WITH_PDM_ASYNC_COMPLETION
+ endif
+ ifdef VBOX_WITH_NETSHAPER
+  VBoxVMMRiscv_DEFS   += VBOX_WITH_NETSHAPER
+ endif
+ #ifdef VBOX_WITH_DBGF_TRACING
+ # VBoxVMMRiscv_DEFS   += VBOX_WITH_DBGF_TRACING
+ #endif
+ #ifdef VBOX_WITH_DBGF_FLOW_TRACING @todo Later
+ # VBoxVMMRiscv_DEFS   += VBOX_WITH_DBGF_FLOW_TRACING
+ #endif
+ if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.arm64)
+  VBoxVMMRiscv_DEFS   += VMM_HOST_PAGE_SIZE_DYNAMIC
+ endif
+
+ VBoxVMMRiscv_INCS     = \
+ 	include \
+ 	$(VBoxVMM_0_OUTDIR)/CommonGenIncs \
+ 	.
+ VBoxVMMRiscv_SOURCES  = \
+ 	VBoxVMM.d \
+ 	VMMR3/VMMR3VTable.cpp \
+ 	VMMR3/CFGMR3.cpp \
+ 	VMMR3/CPUMR3.cpp \
+ 	VMMR3/target-riscv/CPUMR3-riscv.cpp \
+ 	VMMR3/target-riscv/CPUMR3CpuId-riscv.cpp \
+ 	VMMR3/target-riscv/CPUMR3SysReg-riscv.cpp \
+ 	VMMR3/target-riscv/CPUMR3Dbg-riscv.cpp \
+ 	VMMR3/CPUMR3Db.cpp \
+ 	VMMR3/CPUMR3CpuIdInfo.cpp \
+ 	VMMR3/CPUMR3CpuIdInfo-riscv.cpp \
+ 	VMMAll/CPUMAllCpuId.cpp \
+ 	VMMR3/DBGFR3.cpp \
+ 	VMMR3/DBGFR3Addr.cpp \
+ 	VMMR3/DBGFR3AddrSpace.cpp \
+ 	VMMR3/DBGFR3Bp.cpp \
+ 	VMMR3/DBGFR3BugCheck.cpp \
+ 	VMMR3/DBGFR3CoreWrite.cpp \
+ 	VMMR3/DBGFR3Cpu.cpp \
+ 	VMMR3/DBGFR3Disas.cpp \
+ 	VMMR3/DBGFR3Info.cpp \
+ 	VMMR3/DBGFR3Log.cpp \
+ 	VMMR3/DBGFR3Mem.cpp \
+ 	VMMR3/DBGFR3ModInMem.cpp \
+ 	VMMR3/DBGFR3OS.cpp \
+ 	VMMR3/DBGFR3PlugIn.cpp \
+ 	VMMR3/DBGFR3Reg.cpp \
+ 	VMMR3/DBGFR3Stack.cpp \
+ 	VMMR3/DBGFR3Flow.cpp \
+ 	VMMR3/DBGFR3FlowTrace.cpp \
+ 	VMMR3/DBGFR3Trace.cpp \
+ 	VMMR3/DBGFR3SampleReport.cpp \
+ 	VMMR3/DBGFR3Type.cpp \
+ 	VMMR3/EMR3.cpp \
+ 	VMMR3/EMR3Dbg.cpp \
+ 	VMMR3/EMR3Nem.cpp \
+ 	VMMR3/GIMR3.cpp \
+ 	VMMR3/IEMR3.cpp \
+ 	VMMR3/IOMR3.cpp \
+ 	VMMR3/IOMR3IoPort.cpp \
+ 	VMMR3/IOMR3Mmio.cpp \
+ 	VMMR3/GMMR3.cpp \
+ 	VMMR3/GVMMR3.cpp \
+ 	VMMR3/MMR3.cpp \
+ 	VMMR3/MMR3Heap.cpp \
+ 	VMMR3/NEMR3.cpp \
+ 	VMMR3/PDMR3.cpp \
+ 	VMMR3/PDMR3BlkCache.cpp \
+ 	VMMR3/PDMR3Device.cpp \
+ 	VMMR3/PDMR3DevHlp.cpp \
+ 	VMMR3/PDMR3DevMiscHlp.cpp \
+ 	VMMR3/PDMR3Driver.cpp \
+ 	VMMR3/PDMR3Ldr.cpp \
+ 	VMMR3/PDMR3CritSect.cpp \
+ 	VMMR3/PDMR3Queue.cpp \
+ 	VMMR3/PDMR3Task.cpp \
+ 	VMMR3/PDMR3Thread.cpp \
+ 	VMMR3/PGMR3.cpp \
+ 	VMMR3/PGMR3Dbg.cpp \
+ 	VMMR3/PGMR3Handler.cpp \
+ 	VMMR3/PGMR3Phys.cpp \
+ 	VMMR3/PGMR3SavedState.cpp \
+ 	VMMR3/PGMR3SharedPage.cpp \
+ 	VMMR3/SSMR3.cpp \
+ 	VMMR3/STAMR3.cpp \
+ 	VMMR3/TMR3.cpp \
+ 	VMMR3/TRPMR3.cpp \
+ 	VMMR3/VMR3.cpp \
+ 	VMMR3/VMR3Emt.cpp \
+ 	VMMR3/VMR3Req.cpp \
+ 	VMMR3/VMMR3.cpp \
+ 	VMMR3/VMMR3GuruMeditation.cpp \
+ 	VMMR3/VMMR3Tests.cpp \
+ 	VMMR3/target-riscv/HMR3-riscv.cpp \
+ 	VMMAll/CPUMAllRegs-riscv.cpp \
+ 	VMMAll/CPUMAllSysRegs-riscv.cpp \
+ 	VMMAll/DBGFAll.cpp \
+ 	VMMAll/DBGFAllBp.cpp \
+ 	$(if-expr defined(VBOX_WITH_DBGF_TRACING), VMMAll/DBGFAllTracer.cpp,) \
+ 	VMMAll/IOMAll.cpp \
+ 	VMMAll/IOMAllMmioNew.cpp \
+ 	VMMAll/MMAll.cpp \
+ 	VMMAll/NEMAll.cpp \
+ 	VMMAll/PDMAll.cpp \
+ 	VMMAll/PDMAllCritSect.cpp \
+ 	VMMAll/PDMAllCritSectRw.cpp \
+ 	VMMAll/PDMAllCritSectBoth.cpp \
+ 	VMMAll/PDMAllQueue.cpp \
+ 	VMMAll/PDMAllTask.cpp \
+ 	VMMAll/PGMAll.cpp \
+ 	VMMAll/PGMAllHandler.cpp \
+ 	VMMAll/PGMAllPhys.cpp \
+ 	VMMAll/EMAll.cpp \
+ 	VMMAll/GIMAll.cpp \
+ 	VMMAll/TMAll.cpp \
+ 	VMMAll/TMAllCpu.cpp \
+ 	VMMAll/TMAllReal.cpp \
+ 	VMMAll/TMAllVirtual.cpp \
+ 	VMMAll/TRPMAll.cpp \
+ 	VMMAll/VMAll.cpp \
+ 	VMMAll/VMMAll.cpp
+ ifdef VBOX_WITH_VUSB
+  VBoxVMMRiscv_SOURCES += VMMR3/PDMR3Usb.cpp
+ endif
+ ifdef VBOX_WITH_PDM_ASYNC_COMPLETION
+  VBoxVMMRiscv_SOURCES += \
+  	VMMR3/PDMR3AsyncCompletion.cpp \
+  	VMMR3/PDMR3AsyncCompletionFile.cpp \
+  	VMMR3/PDMR3AsyncCompletionFileFailsafe.cpp \
+  	VMMR3/PDMR3AsyncCompletionFileNormal.cpp
+ endif
+ ifdef VBOX_WITH_NETSHAPER
+  VBoxVMMRiscv_SOURCES += \
+  	VMMR3/PDMR3NetShaper.cpp \
+  	VMMAll/PDMAllNetShaper.cpp
+ endif
+ VBoxVMMRiscv_SOURCES += VMMAll/IEMAllStub.cpp
+
+ VBoxVMMRiscv_SOURCES.linux.riscv64 += \
+ 	VMMR3/target-riscv/NEMR3Native-linux-riscv.cpp
+ VBoxVMMRiscv_DEFS.linux.riscv64  += VBOX_WITH_NATIVE_NEM
+
+ VBoxVMMRiscv_LIBS = \
+ 	$(PATH_STAGE_LIB)/DisasmR3$(VBOX_SUFF_LIB)
+ ifdef VBOX_WITH_DEBUGGER
+  VBoxVMMRiscv_LIBS += \
+  	$(PATH_STAGE_LIB)/Debugger-riscv$(VBOX_SUFF_LIB)
+ endif
+ VBoxVMMRiscv_LIBS += \
+ 	$(LIB_RUNTIME)
+endif
+
 $(call KB_FN_DO_PASS0_ON_TARGET,VBoxVMM)
 $(evalcall2 def_VBoxGenIEMInstructionStatisticsTmpl_Header,VBoxVMM,$(VBoxVMM_0_OUTDIR)/CommonGenIncs)
 foobar: $(VBoxVMM_0_OUTDIR)/CommonGenIncs/IEMInstructionStatisticsTmpl.h
@@ -765,7 +946,7 @@ ifdef VBOX_WITH_IEM_RECOMPILER
  # Note! The windows rule is using the .obj rather than the -obj.pdb file as
  #       dependency, as the latter isn't listed as an output file for some reason.
  #
- if1of ($(KBUILD_TARGET_ARCH), arm64)
+ if1of ($(KBUILD_TARGET_ARCH), arm64 riscv64)
   VBoxVMM_CLEAN += \
   	$(VBoxVMM_0_OUTDIR)/CommonGenIncs/IEMAssemblyOffsets.h.ts \
   	$(VBoxVMM_0_OUTDIR)/CommonGenIncs/IEMAssemblyOffsets.h

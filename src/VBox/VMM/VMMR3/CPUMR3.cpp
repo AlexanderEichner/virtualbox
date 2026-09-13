@@ -290,7 +290,7 @@ VMMR3DECL(int) CPUMR3Init(PVM pVM)
 #ifdef VBOX_STRICT
 # ifdef VBOX_VMM_TARGET_X86
     rc = cpumR3MsrStrictInitChecks();
-# elif defined(VBOX_VMM_TARGET_ARMV8)
+# elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     rc = cpumR3SysRegStrictInitChecks();
 # endif
     AssertRCReturn(rc, rc);
@@ -335,6 +335,9 @@ VMMR3DECL(int) CPUMR3Init(PVM pVM)
         rc = CPUMCpuIdExplodeFeaturesArmV8(pVM->cpum.s.paHostIdRegsR3, pVM->cpum.s.cHostIdRegs, &g_CpumHostFeatures.s);
         AssertLogRelRCReturn(rc, rc);
 
+#elif defined(RT_ARCH_RISCV64)
+        /** @todo */
+        rc = VINF_SUCCESS;
 #else
 # error port me
 #endif
@@ -455,7 +458,8 @@ VMMR3DECL(int) CPUMR3Init(PVM pVM)
 #endif
 
 #if  (defined(VBOX_VMM_TARGET_X86)   && !defined(RT_ARCH_AMD64) && !defined(RT_ARCH_X86)) \
-  || (defined(VBOX_VMM_TARGET_ARMV8) && !defined(RT_ARCH_ARM64) && !defined(RT_ARCH_ARM32))
+  || (defined(VBOX_VMM_TARGET_ARMV8) && !defined(RT_ARCH_ARM64) && !defined(RT_ARCH_ARM32)) \
+  || (defined(VBOX_VMM_TARGET_RISCV) && !defined(RT_ARCH_RISCV64) && !defined(RT_ARCH_RISCV32))
     /** @todo cpuidhost */
 #endif
 

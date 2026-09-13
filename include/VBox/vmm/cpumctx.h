@@ -93,8 +93,10 @@ typedef struct CPUMSYSENTER
 } CPUMSYSENTER;
 
 
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8)
 # include <VBox/vmm/cpumctx-armv8.h>
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# include <VBox/vmm/cpumctx-riscv.h>
 #else
 # include <VBox/vmm/cpumctx-x86-amd64.h>
 #endif

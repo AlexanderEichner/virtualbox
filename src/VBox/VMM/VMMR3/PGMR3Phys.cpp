@@ -1173,12 +1173,16 @@ static int pgmR3PhysRamRangeInsertLookup(PVM pVM, PPGMRAMRANGE pRam, RTGCPHYS GC
      * The moving of existing table entries is done in a way that allows other
      * EMTs to perform concurrent lookups with the updating.
      */
+#ifndef RT_ARCH_RISCV64
     bool const fUseAtomic = pVM->enmVMState != VMSTATE_CREATING
                          && pVM->cCpus > 1
-#ifdef RT_ARCH_AMD64
+# ifdef RT_ARCH_AMD64
                          && g_CpumHostFeatures.s.fCmpXchg16b
-#endif
+# endif
                           ;
+#else
+    bool const fUseAtomic = false;
+#endif
 
     /* Signal that we're modifying the lookup table: */
     uint32_t const idGeneration = (pVM->pgm.s.RamRangeUnion.idGeneration + 1) | 1; /* paranoia^3 */
@@ -1213,9 +1217,10 @@ static int pgmR3PhysRamRangeInsertLookup(PVM pVM, PPGMRAMRANGE pRam, RTGCPHYS GC
                     pCur->GCPhysLast       = pCur[-1].GCPhysLast;
                     cToMove -= 1;
                 } while (cToMove > 0);
+#ifndef RT_ARCH_RISCV64
             else
             {
-#if RTASM_HAVE_WRITE_U128 >= 2
+# if RTASM_HAVE_WRITE_U128 >= 2
                 do
                 {
                     pCur    -= 1;
@@ -1223,7 +1228,7 @@ static int pgmR3PhysRamRangeInsertLookup(PVM pVM, PPGMRAMRANGE pRam, RTGCPHYS GC
                     cToMove -= 1;
                 } while (cToMove > 0);
 
-#else
+# else
                 uint64_t u64PrevLo = pCur[-1].u128Normal.s.Lo;
                 uint64_t u64PrevHi = pCur[-1].u128Normal.s.Hi;
                 do
@@ -1238,8 +1243,9 @@ static int pgmR3PhysRamRangeInsertLookup(PVM pVM, PPGMRAMRANGE pRam, RTGCPHYS GC
                     u64PrevHi = u64CurHi;
                     cToMove -= 1;
                 } while (cToMove > 0);
-#endif
+# endif
             }
+#endif
         }
     }
 
@@ -1252,6 +1258,7 @@ static int pgmR3PhysRamRangeInsertLookup(PVM pVM, PPGMRAMRANGE pRam, RTGCPHYS GC
         pInsert->GCPhysFirstAndId = idRamRange | GCPhys;
         pInsert->GCPhysLast       = GCPhysLast;
     }
+#ifndef RT_ARCH_RISCV64
     else
     {
         PGMRAMRANGELOOKUPENTRY NewEntry;
@@ -1259,6 +1266,7 @@ static int pgmR3PhysRamRangeInsertLookup(PVM pVM, PPGMRAMRANGE pRam, RTGCPHYS GC
         NewEntry.GCPhysLast       = GCPhysLast;
         ASMAtomicWriteU128v2(&pInsert->u128Volatile.u, NewEntry.u128Normal.s.Hi, NewEntry.u128Normal.s.Lo);
     }
+#endif
 
     /*
      * Update the generation and count in one go, signaling the end of the updating.
@@ -1371,12 +1379,16 @@ static int pgmR3PhysRamRangeRemoveLookup(PVM pVM, PPGMRAMRANGE pRam, uint32_t *p
      * The moving of existing table entries is done in a way that allows other
      * EMTs to perform concurrent lookups with the updating.
      */
+#ifndef RT_ARCH_RISCV64
     bool const fUseAtomic = pVM->enmVMState != VMSTATE_CREATING
                          && pVM->cCpus > 1
-#ifdef RT_ARCH_AMD64
+# ifdef RT_ARCH_AMD64
                          && g_CpumHostFeatures.s.fCmpXchg16b
-#endif
+# endif
                           ;
+#else
+    bool const fUseAtomic = false;
+#endif
 
     /* Signal that we're modifying the lookup table: */
     uint32_t const idGeneration = (pVM->pgm.s.RamRangeUnion.idGeneration + 1) | 1; /* paranoia^3 */
@@ -1396,9 +1408,10 @@ static int pgmR3PhysRamRangeRemoveLookup(PVM pVM, PPGMRAMRANGE pRam, uint32_t *p
                 pCur    += 1;
                 cToMove -= 1;
             } while (cToMove > 0);
+#ifndef RT_ARCH_RISCV64
         else
         {
-#if RTASM_HAVE_WRITE_U128 >= 2
+# if RTASM_HAVE_WRITE_U128 >= 2
             do
             {
                 ASMAtomicWriteU128U(&pCur->u128Volatile, pCur[1].u128Normal);
@@ -1406,7 +1419,7 @@ static int pgmR3PhysRamRangeRemoveLookup(PVM pVM, PPGMRAMRANGE pRam, uint32_t *p
                 cToMove -= 1;
             } while (cToMove > 0);
 
-#else
+# else
             uint64_t u64PrevLo = pCur->u128Normal.s.Lo;
             uint64_t u64PrevHi = pCur->u128Normal.s.Hi;
             do
@@ -1421,8 +1434,9 @@ static int pgmR3PhysRamRangeRemoveLookup(PVM pVM, PPGMRAMRANGE pRam, uint32_t *p
                 pCur    += 1;
                 cToMove -= 1;
             } while (cToMove > 0);
-#endif
+# endif
         }
+#endif
     }
 
     /* Update the RAM range entry to indicate that it is no longer mapped.

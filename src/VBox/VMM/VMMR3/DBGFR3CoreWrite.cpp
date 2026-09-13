@@ -399,7 +399,7 @@ static void dbgfR3GetCoreCpu(PVMCPU pVCpu, PDBGFCORECPU pDbgfCpu)
 
 # undef DBGFCOPYSEL
 
-#elif defined(VBOX_VMM_TARGET_ARMV8)
+#elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(pCtx, pDbgfCpu);
     AssertReleaseFailed();
 

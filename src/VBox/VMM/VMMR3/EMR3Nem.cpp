@@ -55,6 +55,9 @@
 #include "VMMTracing.h"
 
 #include <iprt/asm.h>
+#if defined(VBOX_VMM_TARGET_RISCV)
+# include <iprt/riscv.h>
+#endif
 
 #include "EMInline.h"
 
@@ -95,7 +98,7 @@ VBOXSTRICTRC emR3NemSingleInstruction(PVM pVM, PVMCPU pVCpu, uint32_t fFlags)
     if (!NEMR3CanExecuteGuest(pVM, pVCpu))
         return VINF_EM_RESCHEDULE;
 
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     uint64_t const uOldPc  = pVCpu->cpum.GstCtx.Pc.u64;
 #elif defined(VBOX_VMM_TARGET_X86)
     uint64_t const uOldRip = pVCpu->cpum.GstCtx.rip;
@@ -147,7 +150,7 @@ VBOXSTRICTRC emR3NemSingleInstruction(PVM pVM, PVMCPU pVCpu, uint32_t fFlags)
         /*
          * Done?
          */
-#ifdef VBOX_VMM_TARGET_ARMV8
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         CPUM_ASSERT_NOT_EXTRN(pVCpu, CPUMCTX_EXTRN_PC);
         if (   (rcStrict != VINF_SUCCESS && rcStrict != VINF_EM_DBG_STEPPED)
             || !(fFlags & EM_ONE_INS_FLAGS_RIP_CHANGE)
@@ -215,6 +218,14 @@ static int emR3NemExecuteInstructionWorker(PVM pVM, PVMCPU pVCpu, int rcRC)
     }
 # elif defined(VBOX_VMM_TARGET_X86)
     Log(("EMINS: %04x:%RGv RSP=%RGv\n", pVCpu->cpum.GstCtx.cs.Sel, (RTGCPTR)pVCpu->cpum.GstCtx.rip, (RTGCPTR)pVCpu->cpum.GstCtx.rsp));
+    if (pszPrefix)
+    {
+        DBGFR3_INFO_LOG(pVM, pVCpu, "cpumguest", pszPrefix);
+        DBGFR3_DISAS_INSTR_CUR_LOG(pVCpu, pszPrefix);
+    }
+# elif defined(VBOX_VMM_TARGET_RISCV)
+    Log(("EMINS: %RGv SP=%RGv\n", (RTGCPTR)pVCpu->cpum.GstCtx.Pc.u64,
+         (RTGCPTR)pVCpu->cpum.GstCtx.aGRegs[RISCV_REG_SP].x));
     if (pszPrefix)
     {
         DBGFR3_INFO_LOG(pVM, pVCpu, "cpumguest", pszPrefix);
@@ -384,6 +395,8 @@ VBOXSTRICTRC emR3NemExecute(PVM pVM, PVMCPU pVCpu, bool *pfFFDone)
     LogFlow(("emR3NemExecute%d: (pc=%RGv)\n", pVCpu->idCpu, (RTGCPTR)pVCpu->cpum.GstCtx.Pc.u64));
 #elif defined(VBOX_VMM_TARGET_X86)
     LogFlow(("emR3NemExecute%d: (cs:eip=%04x:%RGv)\n", pVCpu->idCpu, pVCpu->cpum.GstCtx.cs.Sel, (RTGCPTR)pVCpu->cpum.GstCtx.rip));
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    LogFlow(("emR3NemExecute%d: (pc=%RGv)\n", pVCpu->idCpu, (RTGCPTR)pVCpu->cpum.GstCtx.Pc.u64));
 #else
 # error "port me"
 #endif
@@ -451,7 +464,7 @@ VBOXSTRICTRC emR3NemExecute(PVM pVM, PVMCPU pVCpu, bool *pfFFDone)
                     Log(("NEMR%d-CPU%d: %04x:%08x ESP=%08X IF=%d IOPL=%d CR0=%x CR4=%x EFER=%x\n", cpl, pVCpu->idCpu, pVCpu->cpum.GstCtx.cs.Sel,          pVCpu->cpum.GstCtx.eip, pVCpu->cpum.GstCtx.esp, pVCpu->cpum.GstCtx.eflags.Bits.u1IF, pVCpu->cpum.GstCtx.eflags.Bits.u2IOPL, (uint32_t)pVCpu->cpum.GstCtx.cr0, (uint32_t)pVCpu->cpum.GstCtx.cr4, (uint32_t)pVCpu->cpum.GstCtx.msrEFER));
             }
         }
-# elif defined(VBOX_VMM_TARGET_ARMV8)
+# elif defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
         if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_PC))
         {
             /** @todo better logging */

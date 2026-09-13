@@ -5001,7 +5001,7 @@ VMMDECL(int) PGMPhysSimpleDirtyWriteGCPtr(PVMCPUCC pVCpu, RTGCPTR GCPtrDst, cons
         PGMPhysReleasePageMappingLock(pVM, &Lock);
 #ifdef VBOX_VMM_TARGET_X86
         rc = PGMGstModifyPage(pVCpu, GCPtrDst, 1, X86_PTE_A | X86_PTE_D, ~(uint64_t)(X86_PTE_A | X86_PTE_D)); AssertRC(rc);
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
         return VINF_SUCCESS;
@@ -5012,7 +5012,7 @@ VMMDECL(int) PGMPhysSimpleDirtyWriteGCPtr(PVMCPUCC pVCpu, RTGCPTR GCPtrDst, cons
     PGMPhysReleasePageMappingLock(pVM, &Lock);
 #ifdef VBOX_VMM_TARGET_X86
     rc = PGMGstModifyPage(pVCpu, GCPtrDst, 1, X86_PTE_A | X86_PTE_D, ~(uint64_t)(X86_PTE_A | X86_PTE_D)); AssertRC(rc);
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
     GCPtrDst = (RTGCPTR)((RTGCUINTPTR)GCPtrDst + cbPage);
@@ -5036,7 +5036,7 @@ VMMDECL(int) PGMPhysSimpleDirtyWriteGCPtr(PVMCPUCC pVCpu, RTGCPTR GCPtrDst, cons
             PGMPhysReleasePageMappingLock(pVM, &Lock);
 #ifdef VBOX_VMM_TARGET_X86
             rc = PGMGstModifyPage(pVCpu, GCPtrDst, 1, X86_PTE_A | X86_PTE_D, ~(uint64_t)(X86_PTE_A | X86_PTE_D)); AssertRC(rc);
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
             return VINF_SUCCESS;
@@ -5047,7 +5047,7 @@ VMMDECL(int) PGMPhysSimpleDirtyWriteGCPtr(PVMCPUCC pVCpu, RTGCPTR GCPtrDst, cons
         PGMPhysReleasePageMappingLock(pVM, &Lock);
 #ifdef VBOX_VMM_TARGET_X86
         rc = PGMGstModifyPage(pVCpu, GCPtrDst, 1, X86_PTE_A | X86_PTE_D, ~(uint64_t)(X86_PTE_A | X86_PTE_D)); AssertRC(rc);
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
         GCPtrDst = (RTGCPTR)((RTGCUINTPTR)GCPtrDst + GUEST_PAGE_SIZE);
@@ -5107,7 +5107,7 @@ VMMDECL(VBOXSTRICTRC) PGMPhysReadGCPtr(PVMCPUCC pVCpu, void *pvDst, RTGCPTR GCPt
             rc = PGMGstModifyPage(pVCpu, GCPtrSrc, 1, X86_PTE_A, ~(uint64_t)(X86_PTE_A));
             AssertRC(rc);
         }
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
         return PGMPhysRead(pVM, GCPhys, pvDst, cb, enmOrigin);
@@ -5131,7 +5131,7 @@ VMMDECL(VBOXSTRICTRC) PGMPhysReadGCPtr(PVMCPUCC pVCpu, void *pvDst, RTGCPTR GCPt
             rc = PGMGstModifyPage(pVCpu, GCPtrSrc, 1, X86_PTE_A, ~(uint64_t)(X86_PTE_A));
             AssertRC(rc);
         }
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
 
@@ -5209,7 +5209,7 @@ VMMDECL(VBOXSTRICTRC) PGMPhysWriteGCPtr(PVMCPUCC pVCpu, RTGCPTR GCPtrDst, const 
             rc = PGMGstModifyPage(pVCpu, GCPtrDst, 1, X86_PTE_A | X86_PTE_D, ~(uint64_t)(X86_PTE_A | X86_PTE_D));
             AssertRC(rc);
         }
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
 
@@ -5238,7 +5238,7 @@ VMMDECL(VBOXSTRICTRC) PGMPhysWriteGCPtr(PVMCPUCC pVCpu, RTGCPTR GCPtrDst, const 
             rc = PGMGstModifyPage(pVCpu, GCPtrDst, 1, X86_PTE_A | X86_PTE_D, ~(uint64_t)(X86_PTE_A | X86_PTE_D));
             AssertRC(rc);
         }
-#elif !defined(VBOX_VMM_TARGET_ARMV8)
+#elif !defined(VBOX_VMM_TARGET_ARMV8) && !defined(VBOX_VMM_TARGET_RISCV)
 # error "misconfig"
 #endif
 

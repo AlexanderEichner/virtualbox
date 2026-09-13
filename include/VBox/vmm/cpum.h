@@ -88,8 +88,10 @@ typedef enum CPUMARCH
     kCpumArch_X86,
     /** ARM based architecture (includs both AArch32 and AArch64). */
     kCpumArch_Arm,
+    /** RISC-V based architecture (includs both RISCV32 and RISCV64). */
+    kCpumArch_RiscV,
 
-    /** @todo RiscV, Mips, ... ;). */
+    /** @todo Mips, ... ;). */
 
     /*
      * Unknown.
@@ -1763,6 +1765,40 @@ AssertCompileMembersAtSameOffset(CPUMFEATURESCOMMON, cMaxLinearAddrWidth,   CPUM
 
 
 /**
+ * CPU features and quirks for RISC-V.
+ *
+ */
+/** @todo */
+typedef struct CPUMFEATURESRISCV
+{
+    /** The microarchitecture. */
+#ifndef VBOX_FOR_DTRACE_LIB
+    CPUMMICROARCH   enmMicroarch;
+#else
+    uint32_t        enmMicroarch;
+#endif
+    /** The CPU vendor (CPUMCPUVENDOR). */
+    uint8_t         enmCpuVendor;
+    /** The maximum physical address width of the CPU. */
+    uint8_t         cMaxPhysAddrWidth;
+    /** The maximum linear address width of the CPU. */
+    uint8_t         cMaxLinearAddrWidth;
+
+    uint8_t         bPadding;
+
+    /** Padding to the required size to match CPUMFEATURESX86. */
+    uint32_t        auPadding[14];
+} CPUMFEATURESRISCV;
+#ifndef VBOX_FOR_DTRACE_LIB
+AssertCompileSize(CPUMFEATURESRISCV, 64);
+AssertCompileMembersAtSameOffset(CPUMFEATURESCOMMON, enmMicroarch,          CPUMFEATURESRISCV, enmMicroarch);
+AssertCompileMembersAtSameOffset(CPUMFEATURESCOMMON, enmCpuVendor,          CPUMFEATURESRISCV, enmCpuVendor);
+AssertCompileMembersAtSameOffset(CPUMFEATURESCOMMON, cMaxPhysAddrWidth,     CPUMFEATURESRISCV, cMaxPhysAddrWidth);
+AssertCompileMembersAtSameOffset(CPUMFEATURESCOMMON, cMaxLinearAddrWidth,   CPUMFEATURESRISCV, cMaxLinearAddrWidth);
+#endif
+
+
+/**
  * Chameleon wrapper structure for the host CPU features.
  *
  * This is used for the globally readable g_CpumHostFeatures variable, which is
@@ -1780,6 +1816,8 @@ typedef union CPUHOSTFEATURES
     CPUMFEATURESX86
 #elif defined(RT_ARCH_ARM64)
     CPUMFEATURESARMV8
+#elif defined(RT_ARCH_RISCV64)
+    CPUMFEATURESRISCV
 #else
 # error "port me"
 #endif
@@ -1802,10 +1840,12 @@ extern CPUHOSTFEATURES g_CpumHostFeatures;
 
 /** The target CPU feature structure.
  * @todo this should have a chameleon wrapper as well (ring-0).  */
-#ifndef VBOX_VMM_TARGET_ARMV8
-typedef CPUMFEATURESX86   CPUMFEATURES;
-#else
+#if defined(VBOX_VMM_TARGET_ARMV8)
 typedef CPUMFEATURESARMV8 CPUMFEATURES;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+typedef CPUMFEATURESRISCV CPUMFEATURES;
+#else
+typedef CPUMFEATURESX86   CPUMFEATURES;
 #endif
 /** Pointer to a CPU feature structure. */
 typedef CPUMFEATURES *PCPUMFEATURES;
@@ -1911,6 +1951,7 @@ typedef enum CPUMDBENTRYTYPE
     CPUMDBENTRYTYPE_INVALID = 0,
     CPUMDBENTRYTYPE_X86,
     CPUMDBENTRYTYPE_ARM,
+    CPUMDBENTRYTYPE_RISCV,
     CPUMDBENTRYTYPE_END,
     CPUMDBENTRYTYPE_32BIT_HACK = 0x7fffffff
 } CPUMDBENTRYTYPE;
@@ -2057,10 +2098,12 @@ typedef CPUMDBENTRYARM const *PCCPUMDBENTRYARM;
  * Include the target specific header.
  * This uses several of the above types, so it must be postponed till here.
  */
-#ifndef VBOX_VMM_TARGET_ARMV8
-# include <VBox/vmm/cpum-x86-amd64.h>
-#else
+#if defined(VBOX_VMM_TARGET_ARMV8)
 # include <VBox/vmm/cpum-armv8.h>
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# include <VBox/vmm/cpum-riscv.h>
+#else
+# include <VBox/vmm/cpum-x86-amd64.h>
 #endif
 
 
@@ -2128,6 +2171,19 @@ typedef struct CPUMCPUIDINFOSTATEARMV8
 /** Pointer to a ARMv8 CPUID info dumper state. */
 typedef CPUMCPUIDINFOSTATEARMV8 *PCPUMCPUIDINFOSTATEARMV8;
 
+
+/**
+ * RISC-V CPUID info dumper state.
+ */
+typedef struct CPUMCPUIDINFOSTATERISCV
+{
+    CPUMCPUIDINFOSTATE          Cmn;
+
+    CPUMFEATURESRISCV const    *pFeatures;
+    /** @todo */
+} CPUMCPUIDINFOSTATERISCV;
+/** Pointer to a RISC-V CPUID info dumper state. */
+typedef CPUMCPUIDINFOSTATERISCV *PCPUMCPUIDINFOSTATERISCV;
 
 
 RT_C_DECLS_BEGIN

@@ -3576,11 +3576,13 @@ class SimpleParser(object): # pylint: disable=too-many-instance-attributes
             'RT_ARCH_X86':                     -1,
             'RT_ARCH_SPARC':                   -1,
             'RT_ARCH_SPARC64':                 -1,
+            'RT_ARCH_RISCV64':                 -1,
         };
         kdBuildArchToIprt = {
             'amd64':   'RT_ARCH_AMD64',
             'arm64':   'RT_ARCH_ARM64',
             'sparc32': 'RT_ARCH_SPARC64',
+            'riscv64': 'RT_ARCH_RISCV64',
         };
         ## For parsing the next defined(xxxx).
         koMatchDefined = re.compile(r'\s*defined\s*\(\s*([^ \t)]+)\s*\)\s*');

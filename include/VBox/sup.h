@@ -46,8 +46,10 @@
 #include <iprt/cpuset.h>
 #if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86)
 # include <iprt/asm-amd64-x86.h>
-#elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM64)
+#elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
 # include <iprt/asm-arm.h>
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+# include <iprt/asm-riscv.h>
 #endif
 
 RT_C_DECLS_BEGIN
@@ -854,7 +856,9 @@ DECLINLINE(PSUPGIPCPU) SUPGetGipCpuBySetIndex(PSUPGLOBALINFOPAGE pGip, uint32_t 
 }
 
 
-#if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) || defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
+#if    defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) \
+    || defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32) \
+    || defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
 
 /** @internal */
 SUPDECL(uint64_t) SUPReadTscWithDelta(PSUPGLOBALINFOPAGE pGip);
@@ -873,7 +877,7 @@ DECLINLINE(uint64_t) SUPReadTsc(void)
     return SUPReadTscWithDelta(pGip);
 }
 
-#endif /* X86 || AMD64 || ARM64 || ARM32 */
+#endif /* X86 || AMD64 || ARM64 || ARM32 || RISCV64 || RISCV32 */
 
 /** @internal */
 SUPDECL(int64_t) SUPGetTscDeltaSlow(PSUPGLOBALINFOPAGE pGip);
