@@ -441,6 +441,11 @@ static DECLCALLBACK(int)  platformR3Construct(PPDMDEVINS pDevIns, int iInstance,
         if (!pThis->Lun0.pDrvVfs)
             return PDMDevHlpVMSetError(pDevIns, VERR_PDM_MISSING_INTERFACE_BELOW, RT_SRC_POS, N_("Resource storage driver is missing VFS interface below"));
     }
+    else if (rc == VERR_PDM_NO_ATTACHED_DRIVER)
+    {
+        pThis->Lun0.pDrvVfs   = NULL;
+        LogRel(("Platform#%d: no unit\n", iInstance));
+    }
     else
         return PDMDevHlpVMSetError(pDevIns, rc, RT_SRC_POS, N_("Can't attach resource Storage driver"));
 
