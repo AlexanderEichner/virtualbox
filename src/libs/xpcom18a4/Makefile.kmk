@@ -503,6 +503,8 @@ VBox-xpcom-xptcall_SOURCES.arm64         = xpcom/reflect/xptcall/src/md/unix/xpt
 VBox-xpcom-xptcall_SOURCES.darwin.amd64  = xpcom/reflect/xptcall/src/md/unix/xptcstubs_amd64_darwin.cpp # Underscore prefix.
 VBox-xpcom-xptcall_SOURCES.freebsd.amd64 = xpcom/reflect/xptcall/src/md/unix/xptcstubs_x86_64_linux.cpp
 VBox-xpcom-xptcall_SOURCES.linux.amd64   = xpcom/reflect/xptcall/src/md/unix/xptcstubs_x86_64_linux.cpp
+VBox-xpcom-xptcall_SOURCES.riscv64       = xpcom/reflect/xptcall/src/md/unix/xptcinvoke_riscv64_vbox.cpp \
+	xpcom/reflect/xptcall/src/md/unix/xptcstubs_riscv64_vbox.cpp
 ifndef VBOX_GCC_USING_SOLARIS_AS
  VBox-xpcom-xptcall_SOURCES.solaris.amd64 = xpcom/reflect/xptcall/src/md/unix/xptcstubs_x86_64_linux.cpp
 else
