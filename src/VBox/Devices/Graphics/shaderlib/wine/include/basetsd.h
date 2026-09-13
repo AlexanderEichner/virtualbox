@@ -45,7 +45,7 @@ extern "C" {
  * 64-bit.
  */
 
-#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__sparc64__) || defined(__aarch64__)) && !defined(_WIN64)
+#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__sparc64__) || defined(__aarch64__) || (defined(__riscv_xlen) && __riscv_xlen == 64)) && !defined(_WIN64)
 #define _WIN64
 #endif
 
@@ -319,6 +319,10 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 # define BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
 #elif defined(__MIPSEL__)
+# undef  WORDS_BIGENDIAN
+# undef  BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
+#elif defined(__riscv_xlen)
 # undef  WORDS_BIGENDIAN
 # undef  BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
