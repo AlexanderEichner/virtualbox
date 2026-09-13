@@ -434,6 +434,9 @@ if   !defined(VBOX_ONLY_ADDITIONS) \
   ifdef VBOX_WITH_VIRT_ARMV8
    VBOX_EFI_FIRMWARE_ARCHES += arm32 arm64
   endif
+  ifdef VBOX_WITH_VIRT_RISCV
+   VBOX_EFI_FIRMWARE_ARCHES += riscv64
+  endif
   VBOX_EFI_ARCH_TO_DBGSUFF.x86   := .pdb
   VBOX_EFI_ARCH_TO_DBGSUFF.amd64 := .pdb
   VBOX_EFI_ARCH_TO_DBGSUFF.arm32 := .debug
