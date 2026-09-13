@@ -27,8 +27,10 @@ PlatformHasAcpiDt (
   )
 {
   EFI_STATUS            Status;
+#ifndef VBOX
   FIRMWARE_CONFIG_ITEM  FwCfgItem;
   UINTN                 FwCfgSize;
+#endif
 
   //
   // If we fail to install any of the necessary protocols below, the OS will be

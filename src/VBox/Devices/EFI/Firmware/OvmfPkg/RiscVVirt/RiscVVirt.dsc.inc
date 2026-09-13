@@ -12,6 +12,23 @@
 [Defines]
   DEFINE DEBUG_PRINT_ERROR_LEVEL = 0x80000047
 
+!ifdef $(VBOX)
+[BuildOptions.RiscV64]
+    GCC:*_*_*_CC_FLAGS  = -DVBOX -DIPRT_NO_CRT -DRT_OS_UEFI -DARCH_BITS=64 -DHC_ARCH_BITS=64 -DVBOX_REV=$(VBOX_REV)
+    GCC:*_*_*_ASM_FLAGS = -DVBOX -DIPRT_NO_CRT -DRT_OS_UEFI -DARCH_BITS=64 -DHC_ARCH_BITS=64 -DVBOX_REV=$(VBOX_REV)
+    GCC:*_*_*_PP_FLAGS  = -DVBOX -DIPRT_NO_CRT -DRT_OS_UEFI -DARCH_BITS=64 -DHC_ARCH_BITS=64 -DVBOX_REV=$(VBOX_REV)
+   MSFT:*_*_*_CC_FLAGS  = -DVBOX -DIPRT_NO_CRT -DRT_OS_UEFI -DARCH_BITS=64 -DHC_ARCH_BITS=64 -DVBOX_REV=$(VBOX_REV)
+  INTEL:*_*_*_CC_FLAGS  = -DVBOX -DIPRT_NO_CRT -DRT_OS_UEFI -DARCH_BITS=64 -DHC_ARCH_BITS=64 -DVBOX_REV=$(VBOX_REV)
+
+!ifdef $(SOURCE_DEBUG_ENABLE)
+  # Get much better source-level debugging
+    GCC:DEBUG_*_*_CC_FLAGS =     -DVBOX_SOURCE_DEBUG_ENABLE
+   MSFT:DEBUG_*_*_CC_FLAGS = /Od -DVBOX_SOURCE_DEBUG_ENABLE
+  INTEL:DEBUG_*_*_CC_FLAGS =     -DVBOX_SOURCE_DEBUG_ENABLE
+!endif
+
+!endif
+
 [LibraryClasses.common]
 !ifdef $(SOURCE_DEBUG_ENABLE)
   PeCoffExtraActionLib|SourceLevelDebugPkg/Library/PeCoffExtraActionLibDebug/PeCoffExtraActionLibDebug.inf
@@ -142,6 +159,10 @@
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
+
+!ifdef $(VBOX)
+  VBoxArmPlatformLib|VBoxPkg/Library/VBoxArmPlatformLib/VBoxArmPlatformLib.inf
+!endif
 
 [LibraryClasses.common.SEC]
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
