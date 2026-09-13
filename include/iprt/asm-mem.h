@@ -3,6 +3,7 @@
  */
 
 /*
+ * Copyright (C) 2026 Alexander Eichner <github@aeichner.de>.
  * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
@@ -343,6 +344,18 @@ DECLINLINE(uint8_t) ASMProbeReadByte(const void RT_FAR *pvByte) RT_NOTHROW_DEF
                          : [pMem] "Q" (*(uint8_t const *)pvByte));
     return (uint8_t)u32;
 #  endif
+
+# elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    uint32_t u32;
+    __asm__ __volatile__("Lstart_ASMProbeReadByte_%=:\n\t"
+#  if defined(RT_ARCH_RISCV64)
+                         "lb        %[uDst], %[pMem]\n\t"
+#  else
+#   error "Port me"
+#  endif
+                         : [uDst] "=&r" (u32)
+                         : [pMem] "A" (*(uint8_t const *)pvByte));
+    return (uint8_t)u32;
 
 # else
 #  error "Port me"

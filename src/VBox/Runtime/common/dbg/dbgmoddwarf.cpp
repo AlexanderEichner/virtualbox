@@ -3506,10 +3506,12 @@ static uint8_t rtDwarfUnwind_ArchToPtrEnc(RTLDRARCH enmLdrArch)
     {
         case RTLDRARCH_AMD64:
         case RTLDRARCH_ARM64:
+        case RTLDRARCH_RISCV64:
             return DW_EH_PE_udata8;
         case RTLDRARCH_X86_16:
         case RTLDRARCH_X86_32:
         case RTLDRARCH_ARM32:
+        case RTLDRARCH_RISCV32:
             return DW_EH_PE_udata4;
         case RTLDRARCH_HOST:
         case RTLDRARCH_WHATEVER:

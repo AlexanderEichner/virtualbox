@@ -762,6 +762,8 @@ RTDECL(const char *) RTLdrArchName(RTLDRARCH enmArch)
         case RTLDRARCH_X86_32:      return "X86_32";
         case RTLDRARCH_ARM32:       return "ARM32";
         case RTLDRARCH_ARM64:       return "ARM64";
+        case RTLDRARCH_RISCV32:     return "RISCV32";
+        case RTLDRARCH_RISCV64:     return "RISCV64";
 
         case RTLDRARCH_END:
         case RTLDRARCH_32BIT_HACK:

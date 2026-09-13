@@ -417,6 +417,10 @@ typedef enum RTLDRARCH
     RTLDRARCH_ARM32,
     /** 64-bit ARM. */
     RTLDRARCH_ARM64,
+    /** 32-bit RISC-V*/
+    RTLDRARCH_RISCV32,
+    /** 64-bit RISC-V*/
+    RTLDRARCH_RISCV64,
     /** End of the valid values. */
     RTLDRARCH_END,
     /** Make sure the type is a full 32-bit. */

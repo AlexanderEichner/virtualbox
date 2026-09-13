@@ -407,7 +407,7 @@ static int rtR3InitBody(uint32_t fFlags, int cArgs, char ***ppapszArgs, const ch
 # endif  /* VBOX */
 #endif /* !IN_GUEST && !RT_NO_GIP */
 
-#if defined(RT_ARCH_ARM64) && defined(RT_OS_LINUX)
+#if (defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)) && defined(RT_OS_LINUX)
     /*
      * Initialize the page size.
      */

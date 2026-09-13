@@ -358,7 +358,7 @@ RuntimeBaseR3_DEFS          = \
 	RT_NO_GIP \
 	RT_WITHOUT_NOCRT_WRAPPERS \
 	NOFILEID
-if1of ($(KBUILD_TARGET_ARCH), amd64 x86 arm64)
+if1of ($(KBUILD_TARGET_ARCH), amd64 x86 arm64 riscv64)
  RuntimeBaseR3_DEFS         += \
  	IN_SUP_R3
 endif
@@ -864,7 +864,7 @@ ifdef VBOX_WITH_LIBLZMA
  RuntimeBaseR3_SOURCES += \
  	common/zip/lzmavfs.cpp
 endif
-if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.arm64)
+if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.arm64 linux.riscv64)
  RuntimeBaseR3_SOURCES += \
  	r3/mempage-direct.cpp
 else
@@ -942,6 +942,15 @@ RuntimeBaseR3_SOURCES.sparc64 += \
 	common/asm/asm-fake.cpp \
 	common/misc/zero-alt.S \
 	common/string/RTStrMemFind32.cpp
+RuntimeBaseR3_SOURCES.riscv64 := \
+	common/asm/ASMBitFirstClear-generic.cpp \
+	common/asm/ASMBitNextClear-generic.cpp \
+	common/asm/ASMBitFirstSet-generic.cpp \
+	common/asm/ASMBitNextSet-generic.cpp \
+	common/asm/ASMMemZero32-generic.cpp \
+	common/asm/ASMMemFill32-generic.cpp \
+	common/asm/ASMMemFirstMismatchingU8-generic.cpp \
+	common/asm/ASMMemFirstNonZero-generic.cpp
 
 ifdef IPRT_WITH_LZJB
  RuntimeBaseR3_SOURCES += common/misc/lzjb.c
@@ -1020,6 +1029,9 @@ RuntimeBaseR3_SOURCES.sparc32 += \
 	common/string/RTStrEnd.cpp \
 	common/asm/ASMMultU64ByU32DivByU32-generic.cpp
 RuntimeBaseR3_SOURCES.sparc64 += \
+	common/string/RTStrEnd.cpp \
+	common/asm/ASMMultU64ByU32DivByU32-generic.cpp
+RuntimeBaseR3_SOURCES.riscv64 += \
 	common/string/RTStrEnd.cpp \
 	common/asm/ASMMultU64ByU32DivByU32-generic.cpp
 
@@ -1267,6 +1279,12 @@ else
  	r3/linux/semevent-linux.cpp \
  	r3/linux/semeventmulti-linux.cpp \
  	common/misc/zero-alt.S
+ RuntimeBaseR3_SOURCES.linux.riscv64 += \
+ 	generic/RTMpGetDescription-generic-stub.cpp \
+ 	r3/posix/system-page-size-posix.cpp \
+ 	r3/linux/semevent-linux.cpp \
+ 	r3/linux/semeventmulti-linux.cpp \
+ 	common/misc/zero-alt.S
  RuntimeBaseR3_SOURCES.linux.arm32 += \
  	generic/RTMpGetDescription-generic-stub.cpp \
  	r3/posix/system-page-size-posix.cpp \
@@ -1278,10 +1296,14 @@ else
   	r3/linux/semmutex-linux.cpp
   RuntimeBaseR3_SOURCES.linux.arm64 += \
   	r3/linux/semmutex-linux.cpp
+  RuntimeBaseR3_SOURCES.linux.riscv4 += \
+  	r3/linux/semmutex-linux.cpp
  else
   RuntimeBaseR3_SOURCES.linux.amd64 += \
   	r3/posix/semmutex-posix.cpp
   RuntimeBaseR3_SOURCES.linux.arm64 += \
+  	r3/posix/semmutex-posix.cpp
+  RuntimeBaseR3_SOURCES.linux.riscv64 += \
   	r3/posix/semmutex-posix.cpp
  endif
 endif
@@ -2780,6 +2802,9 @@ RuntimeBldProg_SOURCES.arm32 = \
 RuntimeBldProg_SOURCES.arm64 = \
 	$(RuntimeBaseR3_SOURCES.arm64)
 
+RuntimeBldProg_SOURCES.riscv64 = \
+	$(RuntimeBaseR3_SOURCES.riscv64)
+
 RuntimeBldProg_SOURCES.win.amd64 := \
 	$(RuntimeWin64ASM_SOURCES) \
 	common/string/mempcpy.asm \
@@ -3186,6 +3211,7 @@ if1of ($(DLLS), VBoxRT)
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "x86"  ,-e "/not-x86/d",  -e "/only-x86/d") \
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "amd64",-e "/not-amd64/d",-e "/only-amd64/d") \
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "arm64",-e "/not-arm64/d",-e "/only-arm64/d") \
+		$(if-expr "$(KBUILD_TARGET_ARCH)" == "riscv64",-e "/not-riscv64/d",-e "/only-riscv64/d") \
 		$(if-expr defined(VBOX_WITH_R0_MODULES)     ,-e "/no-gip/d",   -e "/with-gip/d") \
 		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std),$(VBOX_VCC_std)),-2)" >= "17" \
                          && ("$(KBUILD_TARGET)" != "win" || !$(intersects RT_RELAXED_CALLBACKS_TYPES,$(DEFS))) \
@@ -3270,6 +3296,7 @@ if1of ($(DLLS), VBoxRT-x86)
 		-e "/not-x86/d" \
 		-e "/only-amd64/d" \
 		-e "/only-arm64/d" \
+		-e "/only-riscv64/d" \
 		$(if-expr defined(VBOX_WITH_R0_MODULES)     ,-e "/no-gip/d",   -e "/with-gip/d") \
 		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std), $(VBOX_VCC_std)),-2)" >= "17" \
 		                                            ,-e "/before-noexcept/d", -e "/after-noexcept/d") \
@@ -3345,6 +3372,7 @@ if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), win.x86 win.amd64 linux.amd64 dar
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "x86"  ,-e "/not-x86/d",  -e "/only-x86/d") \
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "amd64",-e "/not-amd64/d",-e "/only-amd64/d") \
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "arm64",-e "/not-arm64/d",-e "/only-arm64/d") \
+		$(if-expr "$(KBUILD_TARGET_ARCH)" == "riscv64",-e "/not-riscv64/d",-e "/only-riscv64/d") \
 		$(if-expr defined(VBOX_WITH_R0_MODULES)     ,-e "/no-gip/d",   -e "/with-gip/d") \
 		$(if-expr "$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)" == "darwin.arm64",, -e "/only-darwin.arm64/d") \
 		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std),$(VBOX_VCC_std)),-2)" >= "17" \
@@ -3597,6 +3625,10 @@ RuntimeR0_SOURCES.arm64 += \
 	common/string/RTStrEnd.cpp \
 	common/asm/ASMMemFirstNonZero-generic.cpp \
 	common/asm/ASMBitFirstClear-generic.cpp
+RuntimeR0_SOURCES.riscv64 += \
+	common/string/RTStrEnd.cpp \
+	common/asm/ASMMemFirstNonZero-generic.cpp \
+	common/asm/ASMBitFirstClear-generic.cpp
 RuntimeR0_SOURCES.sparc32 += \
 	common/string/RTStrEnd.cpp
 RuntimeR0_SOURCES.sparc64 += \
@@ -3792,6 +3824,10 @@ RuntimeR0Drv_SOURCES.arm32 += \
 	common/string/RTStrEnd.cpp \
 	common/asm/ASMMultU64ByU32DivByU32-generic.cpp
 RuntimeR0Drv_SOURCES.arm64 += \
+	common/string/RTStrEnd.cpp \
+	common/asm/ASMMultU64ByU32DivByU32-generic.cpp \
+	common/asm/ASMMemFirstMismatchingU8-generic.cpp
+RuntimeR0Drv_SOURCES.riscv64 += \
 	common/string/RTStrEnd.cpp \
 	common/asm/ASMMultU64ByU32DivByU32-generic.cpp \
 	common/asm/ASMMemFirstMismatchingU8-generic.cpp

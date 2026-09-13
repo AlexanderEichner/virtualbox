@@ -96,7 +96,7 @@ static int rtR3InitLnxIterateSharedObjects(struct dl_phdr_info *pDlInfo, size_t 
     /* Iterate over the program headers and dump the executable segments. */
     for (uint32_t i = 0; i < pDlInfo->dlpi_phnum; i++)
     {
-#if defined(RT_ARCH_AMD64) || defined(RT_ARCH_ARM64)
+#if defined(RT_ARCH_AMD64) || defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)
         const Elf64_Phdr *pPHdr = &pDlInfo->dlpi_phdr[i];
 #elif defined(RT_ARCH_X86)
         const Elf32_Phdr *pPHdr = &pDlInfo->dlpi_phdr[i];
@@ -228,6 +228,8 @@ static void rtR3LnxSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *pvC
                         pXcptCtx->regs[28], pXcptCtx->regs[29], pXcptCtx->regs[30]);
         uXcptSP = pXcptCtx->sp;
         uXcptPC = pXcptCtx->pc;
+#elif defined(RT_ARCH_RISCV64)
+        RT_NOREF(pXcptCtx); /** @todo */
 #endif
 
         /*
