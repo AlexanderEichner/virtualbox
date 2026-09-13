@@ -1343,7 +1343,7 @@ static DECLCALLBACK(int) dbgcCmdUnassemble(PCDBGCCMD pCmd, PDBGCCMDHLP pCmdHlp, 
     {
         if (!DBGCVAR_ISPOINTER(pDbgc->DisasmPos.enmType))
         {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             AssertReleaseFailed();
 #else
             /** @todo Batch query CS, RIP, CPU mode and flags. */
@@ -1485,7 +1485,7 @@ static DECLCALLBACK(int) dbgcCmdUnassemble(PCDBGCCMD pCmd, PDBGCCMDHLP pCmdHlp, 
                 return rc2;
             if (cTries-- > 0)
                 return DBGCCmdHlpFailRc(pCmdHlp, pCmd, rc, "Too many disassembly failures. Giving up");
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             cbInstr = sizeof(uint32_t);
 #else
             cbInstr = 1;
@@ -2111,7 +2111,7 @@ static DECLCALLBACK(int) dbgcCmdUnassembleCfg(PCDBGCCMD pCmd, PDBGCCMDHLP pCmdHl
     {
         if (!DBGCVAR_ISPOINTER(pDbgc->DisasmPos.enmType))
         {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             AssertReleaseFailed();
 #else
             /** @todo Batch query CS, RIP, CPU mode and flags. */
@@ -2253,7 +2253,7 @@ static DECLCALLBACK(int) dbgcCmdListSource(PCDBGCCMD pCmd, PDBGCCMDHLP pCmdHlp, 
     {
         if (!DBGCVAR_ISPOINTER(pDbgc->SourcePos.enmType))
         {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             AssertReleaseFailed();
 #else
             PVMCPU pVCpu = VMMR3GetCpuByIdU(pUVM, pDbgc->idCpu);
@@ -3859,7 +3859,7 @@ static DECLCALLBACK(int) dbgcCmdDumpMem(PCDBGCCMD pCmd, PDBGCCMDHLP pCmdHlp, PUV
  */
 static RTGCPHYS dbgcGetGuestPageMode(PDBGC pDbgc, bool *pfPAE, bool *pfLME, bool *pfPSE, bool *pfPGE, bool *pfNXE)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     AssertReleaseFailed();
     RT_NOREF(pDbgc, pfPAE, pfLME, pfPSE, pfPGE, pfNXE);
     *pfPAE = *pfLME = *pfPSE = *pfPGE = *pfNXE = false;
@@ -3897,7 +3897,7 @@ static RTGCPHYS dbgcGetGuestPageMode(PDBGC pDbgc, bool *pfPAE, bool *pfLME, bool
  */
 static RTHCPHYS dbgcGetShadowPageMode(PDBGC pDbgc, bool *pfPAE, bool *pfLME, bool *pfPSE, bool *pfPGE, bool *pfNXE)
 {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
     RT_NOREF(pDbgc, pfPAE, pfLME, pfPSE, pfPGE, pfNXE);
     AssertReleaseFailed();
     *pfPAE = *pfLME = *pfPSE = *pfPGE = *pfNXE = false;
@@ -6626,7 +6626,7 @@ static DECLCALLBACK(int) dbgcCmdTraceFlowEnable(PCDBGCCMD pCmd, PDBGCCMDHLP pCmd
     {
         if (!DBGCVAR_ISPOINTER(pDbgc->DisasmPos.enmType))
         {
-#if defined(VBOX_VMM_TARGET_ARMV8)
+#if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_RISCV)
             AssertReleaseFailed();
 #else
             /** @todo Batch query CS, RIP, CPU mode and flags. */

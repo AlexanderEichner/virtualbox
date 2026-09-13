@@ -590,6 +590,12 @@ VMMR3DECL(int) DBGFR3FlowBranchTblItReset(DBGFFLOWBRANCHTBLIT hFlowBranchTblIt)
 {
     return VERR_INTERNAL_ERROR;
 }
+VMMR3DECL(int)      DBGFR3FlowTraceModCreate(PUVM pUVM, VMCPUID idCpu,
+                                             DBGFFLOWTRACEPROBE hFlowTraceProbeCommon,
+                                             PDBGFFLOWTRACEMOD phFlowTraceMod)
+{
+    return VERR_INTERNAL_ERROR;
+}
 VMMR3DECL(int) DBGFR3FlowTraceModCreateFromFlowGraph(PUVM pUVM, VMCPUID idCpu, DBGFFLOW hFlow,
                                                      DBGFFLOWTRACEPROBE hFlowTraceProbeCommon,
                                                      DBGFFLOWTRACEPROBE hFlowTraceProbeEntry,
