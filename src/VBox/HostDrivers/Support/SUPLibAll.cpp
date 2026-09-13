@@ -50,6 +50,8 @@
 # include <iprt/asm-amd64-x86.h>
 #elif defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
 # include <iprt/asm-arm.h>
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+# include <iprt/asm-riscv.h>
 #endif
 #include <iprt/errcore.h>
 #if defined(IN_RING0) && defined(RT_OS_LINUX)
@@ -58,7 +60,9 @@
 
 
 
-#if defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) || defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
+#if    defined(RT_ARCH_AMD64) || defined(RT_ARCH_X86) \
+    || defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32) \
+    || defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
 /**
  * The slow case for SUPReadTsc where we need to apply deltas.
  *

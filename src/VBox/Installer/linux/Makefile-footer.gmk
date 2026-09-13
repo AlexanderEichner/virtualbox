@@ -48,7 +48,11 @@ else
    ifeq ($(VBOX_KBUILD_TARGET_ARCH),arm32)
     VBOXMOD_0_KFLAGS += -DRT_ARCH_ARM32
    else
-    $(error The variable VBOX_KBUILD_TARGET_ARCH doesn't contain any of the following: amd64, x86, arm64, arm32)
+    ifeq ($(VBOX_KBUILD_TARGET_ARCH),riscv64)
+     VBOXMOD_0_KFLAGS += -DRT_ARCH_RISCV64
+    else
+     $(error The variable VBOX_KBUILD_TARGET_ARCH doesn't contain any of the following: amd64, x86, arm64, arm32, riscv64)
+    endif
    endif
   endif
  endif

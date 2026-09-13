@@ -43,6 +43,7 @@ FILES_VBOXDRV_NOBIN=" \
     ${PATH_ROOT}/include/iprt/asm-arm.h=>include/iprt/asm-arm.h \
     ${PATH_ROOT}/include/iprt/asm-math.h=>include/iprt/asm-math.h \
     ${PATH_ROOT}/include/iprt/asm-mem.h=>include/iprt/asm-mem.h \
+    ${PATH_ROOT}/include/iprt/asm-riscv.h=>include/iprt/asm-riscv.h \
     ${PATH_ROOT}/include/iprt/assert.h=>include/iprt/assert.h \
     ${PATH_ROOT}/include/iprt/assertcompile.h=>include/iprt/assertcompile.h \
     ${PATH_ROOT}/include/iprt/avl.h=>include/iprt/avl.h \
