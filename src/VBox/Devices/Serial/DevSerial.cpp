@@ -6,6 +6,7 @@
  */
 
 /*
+ * Copyright (C) 2026 Alexander Eichner <github@aeichner.de>.
  * Copyright (C) 2018-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
@@ -148,6 +149,41 @@ serialIoPortRead(PPDMDEVINS pDevIns, void *pvUser, RTIOPORT offPort, uint32_t *p
     RT_NOREF_PV(pvUser);
 
     return uartRegRead(pDevIns, &pThis->UartCore, &pThisCC->UartCore, offPort, pu32, cb);
+}
+
+
+/* -=-=-=-=-=- MMIO callbacks -=-=-=-=-=- */
+
+
+/**
+ * @callback_method_impl{FNIOMMMIONEWREAD}
+ */
+static DECLCALLBACK(VBOXSTRICTRC) serialMmioRead(PPDMDEVINS pDevIns, void *pvUser, RTGCPHYS off, void *pv, unsigned cb)
+{
+    PDEVSERIAL   pThis   = PDMDEVINS_2_DATA(pDevIns, PDEVSERIAL);
+    PDEVSERIALCC pThisCC = PDMDEVINS_2_DATA_CC(pDevIns, PDEVSERIALCC);
+    RT_NOREF(pvUser);
+
+    LogFlowFunc(("%RGp cb=%u\n", off, cb));
+
+    AssertReturn(cb == sizeof(uint8_t), VERR_INVALID_PARAMETER);
+
+    return uartRegRead(pDevIns, &pThis->UartCore, &pThisCC->UartCore, (uint32_t)off, (uint32_t *)pv, cb);
+}
+
+
+/**
+ * @callback_method_impl{FNIOMMMIONEWWRITE}
+ */
+static DECLCALLBACK(VBOXSTRICTRC) serialMmioWrite(PPDMDEVINS pDevIns, void *pvUser, RTGCPHYS off, void const *pv, unsigned cb)
+{
+    PDEVSERIAL   pThis   = PDMDEVINS_2_DATA(pDevIns, PDEVSERIAL);
+    PDEVSERIALCC pThisCC = PDMDEVINS_2_DATA_CC(pDevIns, PDEVSERIALCC);
+    RT_NOREF_PV(pvUser);
+
+    AssertReturn(cb == sizeof(uint8_t), VERR_INVALID_PARAMETER);
+
+    return uartRegWrite(pDevIns, &pThis->UartCore, &pThisCC->UartCore, (uint32_t)off, *(uint8_t *)pv, cb);
 }
 
 
@@ -358,7 +394,7 @@ static DECLCALLBACK(int) serialR3Construct(PPDMDEVINS pDevIns, int iInstance, PC
     /*
      * Validate and read the configuration.
      */
-    PDMDEV_VALIDATE_CONFIG_RETURN(pDevIns, "IRQ|IOAddress|YieldOnLSRRead|UartType", "");
+    PDMDEV_VALIDATE_CONFIG_RETURN(pDevIns, "IRQ|IOAddress|YieldOnLSRRead|UartType|MmioBase", "");
 
     bool fYieldOnLSRRead = false;
     rc = pHlp->pfnCFGMQueryBoolDef(pCfg, "YieldOnLSRRead", &fYieldOnLSRRead, false);
@@ -416,12 +452,30 @@ static DECLCALLBACK(int) serialR3Construct(PPDMDEVINS pDevIns, int iInstance, PC
     rc = PDMDevHlpSetDeviceCritSect(pDevIns, PDMDevHlpCritSectGetNop(pDevIns));
     AssertRCReturn(rc, rc);
 
-    /*
-     * Register the I/O ports.
-     */
-    rc = PDMDevHlpIoPortCreateAndMap(pDevIns, uIoAddress, 8 /*cPorts*/, serialIoPortWrite, serialIoPortRead,
-                                     "SERIAL", NULL /*paExtDescs*/, &pThis->hIoPorts);
-    AssertRCReturn(rc, rc);
+    RTGCPHYS GCPhysMmioBase = 0;
+    rc = pHlp->pfnCFGMQueryU64(pCfg, "MmioBase", &GCPhysMmioBase);
+    if (RT_FAILURE(rc) && rc != VERR_CFGM_VALUE_NOT_FOUND)
+        return PDMDEV_SET_ERROR(pDevIns, rc,
+                                N_("Configuration error: Failed to get the \"MmioBase\" value"));
+    if (rc == VERR_CFGM_VALUE_NOT_FOUND)
+    {
+        /*
+         * Register the I/O ports.
+         */
+        rc = PDMDevHlpIoPortCreateAndMap(pDevIns, uIoAddress, 8 /*cPorts*/, serialIoPortWrite, serialIoPortRead,
+                                         "SERIAL", NULL /*paExtDescs*/, &pThis->hIoPorts);
+        AssertRCReturn(rc, rc);
+    }
+    else
+    {
+        /*
+         * Register and map the MMIO region.
+         */
+        IOMMMIOHANDLE hMmio;
+        rc = PDMDevHlpMmioCreateAndMap(pDevIns, GCPhysMmioBase, 8, serialMmioWrite, serialMmioRead,
+                                       IOMMMIO_FLAGS_READ_PASSTHRU | IOMMMIO_FLAGS_WRITE_PASSTHRU, "Serial", &hMmio);
+        AssertRCReturn(rc, rc);
+    }
 
     /*
      * Saved state.
