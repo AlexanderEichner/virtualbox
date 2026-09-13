@@ -353,6 +353,8 @@ else
 endif
 ifeq ($(KBUILD_TARGET_ARCH),x86)
  VBOX_PACKAGE_ARCH  = 32BITS
+else ifeq ($(KBUILD_TARGET_ARCH),riscv64)
+ VBOX_PACKAGE_ARCH  = RISCV64
 else ifeq ($(KBUILD_TARGET_ARCH),arm64)
  VBOX_PACKAGE_ARCH  = ARM64
 else
@@ -368,6 +370,9 @@ VBOX_PACKAGE_STRING = $(VBOX_PACKAGE_OS)_$(VBOX_PACKAGE_ARCH)_$(VBOX_PACKAGE_DIS
 VBOX_SUPPORTED_HOST_ARCHS := amd64
 if1of ($(KBUILD_TARGET), darwin win linux) # Work in progress.
  VBOX_SUPPORTED_HOST_ARCHS += arm64
+endif
+if1of ($(KBUILD_TARGET), linux) # Work in progress.
+ VBOX_SUPPORTED_HOST_ARCHS += riscv64
 endif
 
 
@@ -406,6 +411,11 @@ if "$(KBUILD_TARGET)" == "win" && "$(KBUILD_TYPE)" != "asan" && "$(KBUILD_TARGET
  VBOX_WITH_NOCRT_STATIC := 1
 endif
 
+# Set default march/features for RISC-V
+ifeq ($(KBUILD_TARGET_ARCH),riscv64)
+ VBOX_RISCV_CC_FEATURES := rv64imafdcb_zaamo_zbb_zicsr_zifencei
+endif
+
 ## @name Additions
 ## @{
 # This indicates that additions (of some kind or another) is being _built_.
@@ -420,9 +430,9 @@ endif
 # Build X11 additions. Can be disabled separately.
 if1of ($(KBUILD_TARGET), dragonfly freebsd linux netbsd openbsd solaris)
  VBOX_WITH_X11_ADDITIONS = 1
- # On ARM we don't support the old VBoxVideo graphics emulation and rely fully on VMSVGA
+ # On ARM/RISC-V we don't support the old VBoxVideo graphics emulation and rely fully on VMSVGA
  # (partly due to the fact that it relies on port I/O which is not available there).
- if1of ($(KBUILD_TARGET_ARCH), arm32 arm64)
+ if1of ($(KBUILD_TARGET_ARCH), arm32 arm64 riscv32 riscv64)
   VBOX_NO_LEGACY_XORG_X11 = 1
  endif
 endif
@@ -565,7 +575,7 @@ if1of ($(KBUILD_TARGET), win darwin linux)
  VBOX_WITH_NATIVE_NEM = 1
 endif
 # Enable NEM fallback if the driver is not available.
-if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.amd64 darwin.arm64 linux.amd64 linux.arm64 win.arm64)
+if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.amd64 darwin.arm64 linux.amd64 linux.arm64 linux.riscv64 win.arm64)
  VBOX_WITH_DRIVERLESS_NEM_FALLBACK = 1
 endif
 # Enable local IPC testcase coverage together with the production transport.
@@ -589,13 +599,17 @@ endif
 VBOX_WITH_DBGF_FLOW_TRACING = 1
 # Enables ARMv8 API support and if possible virtualization, see @bugref{10383}
 VBOX_WITH_VIRT_ARMV8 = 1
+# Enables RISC-V API support and if possible virtualization
+if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.riscv64)
+ VBOX_WITH_VIRT_RISCV = 1
+endif
 # Makes x86 emulation on ARM hosts available in the GUI.
 if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), empty-set)
- VBOX_WITH_X86_ON_ARM_ENABLED = 1
+ VBOX_WITH_X86_ENABLED = 1
 endif
 # Makes ARM emulation on x86 hosts available in the GUI.
 if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), empty-set)
- VBOX_WITH_ARM_ON_X86_ENABLED = 1
+ VBOX_WITH_ARM_ENABLED = 1
 endif
 
 if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.amd64)
@@ -1165,7 +1179,7 @@ endif
 ## @{
 # For treating compiler and linker warnings as errors where possible.
 if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), \
-       darwin.x86 darwin.amd64 darwin.arm64 linux.x86 linux.amd64 linux.arm64 win.x86 win.amd64 win.arm64)
+       darwin.x86 darwin.amd64 darwin.arm64 linux.x86 linux.amd64 linux.arm64 linux.riscv64 win.x86 win.amd64 win.arm64)
  VBOX_WITH_WARNINGS_AS_ERRORS = 1
 endif
 # Whether we can use Open Watcom to build stuff.
@@ -1435,7 +1449,7 @@ ifeq ($(KBUILD_TARGET),os2)
  VBOX_WITHOUT_HARDENING = 1
 endif
 
-ifn1of ($(KBUILD_TARGET_ARCH), x86 amd64 arm64)
+ifn1of ($(KBUILD_TARGET_ARCH), x86 amd64 arm64 riscv64)
  VBOX_WITH_ADDITION_DRIVERS =
  VBOX_WITH_DEBUGGER =
  VBOX_WITH_DOCS =
@@ -1866,7 +1880,7 @@ endif
 # This is used for the complicated assembler setup among other things.
 #
 VBOX_TARGET_OSES   := freebsd darwin haiku linux netbsd openbsd solaris darwin os2 win
-VBOX_TARGET_ARCHES := amd64 x86 arm64 sparc32 sparc64
+VBOX_TARGET_ARCHES := amd64 x86 arm64 riscv64 sparc32 sparc64
 
 #
 # VBOX_GCC_TOOL is the kBuild tool name for gcc or clang.
@@ -1988,6 +2002,7 @@ endif
 VBOX_ASTOOL.x86     := $(if-expr defined(DONT_USE_YASM),NASM,YASM)
 VBOX_ASTOOL.amd64   := $(if-expr defined(DONT_USE_YASM),NASM,YASM)
 VBOX_ASTOOL.arm64   := $(VBOX_GCC_TOOL)
+VBOX_ASTOOL.riscv64 := $(VBOX_GCC_TOOL)
 VBOX_ASTOOL.sparc32 := $(VBOX_GCC_TOOL)
 VBOX_ASTOOL.sparc64 := $(VBOX_GCC_TOOL)
 # Spread the above OS-level defaults to os+architecture specifics:
@@ -2023,6 +2038,7 @@ ifdef VBOX_GCC_TOOL
  VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.elf.arm64   := -DASM_FORMAT_ELF
  VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.elf.sparc32 := -DASM_FORMAT_ELF -m32
  VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.elf.sparc64 := -DASM_FORMAT_ELF -m64
+ VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.elf.riscv64 := -DASM_FORMAT_ELF
  VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.macho.x86   := -DASM_FORMAT_MACHO -m32
  VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.macho.amd64 := -DASM_FORMAT_MACHO -m64
  VBOX_$(VBOX_GCC_TOOL)_ASFLAGS.macho.arm64 := -DASM_FORMAT_MACHO
@@ -2078,6 +2094,7 @@ DEFS.amd64       = RT_ARCH_AMD64 __AMD64__
 DEFS.arm64       = RT_ARCH_ARM64
 DEFS.sparc32     = RT_ARCH_SPARC
 DEFS.sparc64     = RT_ARCH_SPARC64
+DEFS.riscv64     = RT_ARCH_RISCV64
 DEFS.darwin      = RT_OS_DARWIN __DARWIN__
 DEFS.freebsd     = RT_OS_FREEBSD __FREEBSD__
 DEFS.haiku       = RT_OS_HAIKU
@@ -2242,7 +2259,7 @@ VBOX_WINPSDK_GST_NT4   ?= $(VBOX_WINPSDK_GST)
 #
 # ARCH_BITS_DEFS.
 #
-if1of ($(KBUILD_TARGET_ARCH), amd64 sparc64 arm64)
+if1of ($(KBUILD_TARGET_ARCH), amd64 sparc64 arm64 riscv64)
  VBOX_HC_ARCH_BITS := 64
  ARCH_BITS_DEFS    := HC_ARCH_BITS=64
 else if1of ($(KBUILD_TARGET_ARCH), x86 sparc32)
@@ -3673,7 +3690,7 @@ endif # !VBOX_NOINC_DYNAMIC_CONFIG_KMK
 #
 ## @todo consider maxing this out.
 ifndef VBOX_GCC_std
- if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.arm64 linux.arm64) # Go straight for c++17 here.
+ if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.arm64 linux.arm64 linux.riscv64) # Go straight for c++17 here.
   VBOX_GCC_std := -std=c++17
   # else if "$(VBOX_CLANG_VERSION_CXX)" vge 60000 # Most language features complete by v6. Lib stuff was less complete in v6, but hopefully acceptable for out purposes.
   #VBOX_GCC_std := -std=c++17
@@ -5253,6 +5270,7 @@ SDK_VBoxSoftFloatR3Shared             := SoftFloat 3 for dll linking.
 SDK_VBoxSoftFloatR3Shared_DEFS        := SOFTFLOAT_FAST_INT64
 SDK_VBoxSoftFloatR3Shared_DEFS.amd64  := LITTLEENDIAN
 SDK_VBoxSoftFloatR3Shared_DEFS.arm64  := LITTLEENDIAN
+SDK_VBoxSoftFloatR3Shared_DEFS.riscv64 := LITTLEENDIAN
 SDK_VBoxSoftFloatR3Shared_DEFS.x86    := LITTLEENDIAN
 if1of ($(KBUILD_TARGET), win)
  SDK_VBoxSoftFloatR3Shared_DEFS       += THREAD_LOCAL=__declspec(thread)
@@ -5268,6 +5286,7 @@ SDK_VBoxSoftFloatR0           := SoftFloat 3 for ring-0 linking.
 SDK_VBoxSoftFloatR0_DEFS      := SOFTFLOAT_FAST_INT64
 SDK_VBoxSoftFloatR0_DEFS.amd64 := LITTLEENDIAN
 SDK_VBoxSoftFloatR0_DEFS.arm64 := LITTLEENDIAN
+SDK_VBoxSoftFloatR0_DEFS.riscv64 := LITTLEENDIAN
 SDK_VBoxSoftFloatR0_DEFS.x86  := LITTLEENDIAN
 SDK_VBoxSoftFloatR0_INCS       = \
 	$(PATH_ROOT)/src/libs/softfloat-3e/source/include
@@ -5278,6 +5297,7 @@ SDK_VBoxSoftFloatGuestR3Shared           := SoftFloat 3 for ring-0 linking.
 SDK_VBoxSoftFloatGuestR3Shared_DEFS      := SOFTFLOAT_FAST_INT64
 SDK_VBoxSoftFloatGuestR3Shared_DEFS.amd64 := LITTLEENDIAN
 SDK_VBoxSoftFloatGuestR3Shared_DEFS.arm64 := LITTLEENDIAN
+SDK_VBoxSoftFloatGuestR3Shared_DEFS.riscv64 := LITTLEENDIAN
 SDK_VBoxSoftFloatGuestR3Shared_DEFS.x86  := LITTLEENDIAN
 SDK_VBoxSoftFloatGuestR3Shared_INCS       = \
 	$(PATH_ROOT)/src/libs/softfloat-3e/source/include
@@ -6485,6 +6505,7 @@ TEMPLATE_VBoxR3Exe_DEFS.arm32          = HC_ARCH_BITS=32
 TEMPLATE_VBoxR3Exe_DEFS.sparc32        = HC_ARCH_BITS=32
 TEMPLATE_VBoxR3Exe_DEFS.amd64          = HC_ARCH_BITS=64
 TEMPLATE_VBoxR3Exe_DEFS.arm64          = HC_ARCH_BITS=64
+TEMPLATE_VBoxR3Exe_DEFS.riscv64        = HC_ARCH_BITS=64
 TEMPLATE_VBoxR3Exe_DEFS.sparc64        = HC_ARCH_BITS=64
 TEMPLATE_VBoxR3Exe_DEFS.win            = _CRT_SECURE_NO_DEPRECATE
 TEMPLATE_VBoxR3Exe_USES                = dtrace
@@ -6650,6 +6671,7 @@ else # the gcc guys
  TEMPLATE_VBoxR3Exe_CXXFLAGS.amd64     = -m64
  TEMPLATE_VBoxR3Exe_CXXFLAGS.sparc32   = -m32
  TEMPLATE_VBoxR3Exe_CXXFLAGS.sparc64   = -m64
+ TEMPLATE_VBoxR3Exe_CXXFLAGS.riscv64   = -march=$(VBOX_RISCV_CC_FEATURES)
  TEMPLATE_VBoxR3Exe_CXXFLAGS.kprofile  = -finstrument-functions
  TEMPLATE_VBoxR3Exe_CFLAGS             = -g $(VBOX_GCC_pipe) $(VBOX_GCC_PEDANTIC_C)   $(VBOX_GCC_Wno-variadic-macros) $(VBOX_GCC_OPT) \
  	$(VBOX_GCC_FP) -fno-strict-aliasing $(VBOX_GCC_fvisibility-hidden) $(VBOX_GCC_IPRT_FMT_CHECK)
@@ -6660,6 +6682,7 @@ else # the gcc guys
  TEMPLATE_VBoxR3Exe_CFLAGS.amd64       = $(TEMPLATE_VBoxR3Exe_CXXFLAGS.amd64)
  TEMPLATE_VBoxR3Exe_CFLAGS.sparc32     = $(TEMPLATE_VBoxR3Exe_CXXFLAGS.sparc32)
  TEMPLATE_VBoxR3Exe_CFLAGS.sparc64     = $(TEMPLATE_VBoxR3Exe_CXXFLAGS.sparc64)
+ TEMPLATE_VBoxR3Exe_CFLAGS.riscv64     = $(TEMPLATE_VBoxR3Exe_CXXFLAGS.riscv64)
  TEMPLATE_VBoxR3Exe_CFLAGS.debug       = $(TEMPLATE_VBoxR3Exe_CXXFLAGS.debug)
  TEMPLATE_VBoxR3Exe_CFLAGS.kprofile    = $(TEMPLATE_VBoxR3Exe_CXXFLAGS.kprofile)
  TEMPLATE_VBoxR3Exe_OBJCFLAGS          = $(TEMPLATE_VBoxR3Exe_CFLAGS)
@@ -7718,6 +7741,7 @@ else # the GCC guys:
  endif
  TEMPLATE_VBoxMainExe_CXXFLAGS.x86       = -m32
  TEMPLATE_VBoxMainExe_CXXFLAGS.amd64     = -m64
+ TEMPLATE_VBoxMainExe_CXXFLAGS.riscv64   = -march=$(VBOX_RISCV_CC_FEATURES)
  TEMPLATE_VBoxMainExe_CXXFLAGS.kprofile  = -finstrument-functions
  TEMPLATE_VBoxMainExe_CFLAGS             = -g $(VBOX_GCC_pipe) $(VBOX_GCC_PEDANTIC_C) $(VBOX_GCC_Wno-variadic-macros) \
  	$(VBOX_GCC_OPT) $(VBOX_GCC_FP) -fno-strict-aliasing $(VBOX_GCC_fvisibility-hidden) $(VBOX_GCC_IPRT_FMT_CHECK) \
@@ -7727,6 +7751,7 @@ else # the GCC guys:
  endif
  TEMPLATE_VBoxMainExe_CFLAGS.x86         = -m32
  TEMPLATE_VBoxMainExe_CFLAGS.amd64       = -m64
+ TEMPLATE_VBoxMainExe_CFLAGS.riscv64     = -march=$(VBOX_RISCV_CC_FEATURES)
  TEMPLATE_VBoxMainExe_CFLAGS.kprofile    = $(TEMPLATE_VBoxMainExe_CXXFLAGS.kprofile)
  TEMPLATE_VBoxMainExe_CFLAGS.debug       = $(TEMPLATE_VBoxMainExe_CXXFLAGS.debug)
  TEMPLATE_VBoxMainExe_OBJCFLAGS          = $(TEMPLATE_VBoxMainExe_CFLAGS)
@@ -7865,7 +7890,7 @@ ifn1of ($(KBUILD_TARGET), win)
  TEMPLATE_VBoxMainComp_INST      = $(INST_BIN)components/
 endif
 ifneq ($(KBUILD_TARGET),win)
- ifeq ($(filter-out linux.arm64 solaris.x86 %.amd64 %.sparc32 %.sparc64,$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)),) ## TODO: cleanup!
+ ifeq ($(filter-out linux.riscv64 linux.arm64 solaris.x86 %.amd64 %.sparc32 %.sparc64,$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)),) ## TODO: cleanup!
   TEMPLATE_VBoxMainComp_DEFS     = PIC $(TEMPLATE_VBoxMainExe_DEFS)
   TEMPLATE_VBoxMainComp_CFLAGS   = -fPIC $(TEMPLATE_VBoxMainExe_CFLAGS)
   TEMPLATE_VBoxMainComp_CXXFLAGS = -fPIC $(TEMPLATE_VBoxMainExe_CXXFLAGS)
@@ -8464,7 +8489,8 @@ ifdef VBOX_WITH_QTGUI
    	Xext \
    	X11
    TEMPLATE_VBoxQtGuiExe_LIBPATH  += \
-   	$(VBOX_LIBPATH_X11)
+   	$(VBOX_LIBPATH_X11) \
+   	/home/ubuntu/qt-6.8.4/lib
   else ifeq ($(KBUILD_TARGET),darwin)
    TEMPLATE_VBoxQtGuiExe_SDKS.darwin        += $(VBOX_DARWIN_DEF_SDK_SDKS)
    TEMPLATE_VBoxQtGuiExe_DEFS.darwin        += $(VBOX_DARWIN_DEF_SDK_DEFS)
@@ -8740,6 +8766,7 @@ else
  TEMPLATE_VBoxBldProg_CFLAGS.sparc32     = -m32
  TEMPLATE_VBoxBldProg_CFLAGS.amd64       = -m64
  TEMPLATE_VBoxBldProg_CFLAGS.sparc64     = -m64
+ TEMPLATE_VBoxBldProg_CFLAGS.riscv64     = -march=$(VBOX_RISCV_CC_FEATURES)
  TEMPLATE_VBoxBldProg_CFLAGS.release     = -O2 -fno-omit-frame-pointer -fno-strict-aliasing
  TEMPLATE_VBoxBldProg_CFLAGS.profile     = $(TEMPLATE_VBoxBldProg_CXXFLAGS.profile)
  TEMPLATE_VBoxBldProg_CFLAGS.kprofile    = $(TEMPLATE_VBoxBldProg_CXXFLAGS.kprofile)
@@ -8751,6 +8778,7 @@ else
  TEMPLATE_VBoxBldProg_CXXFLAGS.sparc32   = -m32
  TEMPLATE_VBoxBldProg_CXXFLAGS.amd64     = -m64
  TEMPLATE_VBoxBldProg_CXXFLAGS.sparc64   = -m64
+ TEMPLATE_VBoxBldProg_CXXFLAGS.riscv64   = -march=$(VBOX_RISCV_CC_FEATURES)
  TEMPLATE_VBoxBldProg_CXXFLAGS.release   = -O2 -fno-omit-frame-pointer -fno-strict-aliasing
  TEMPLATE_VBoxBldProg_CXXFLAGS.profile   = $(TEMPLATE_VBoxBldProg_CXXFLAGS.release)
  TEMPLATE_VBoxBldProg_CXXFLAGS.kprofile  = $(TEMPLATE_VBoxBldProg_CXXFLAGS.release)
@@ -9780,6 +9808,12 @@ build-release-arm64:
 
 build-debug-arm64:
 	+$(MAKE) KBUILD_TYPE=debug KBUILD_TARGET_ARCH=arm64
+
+build-release-riscv64:
+	+$(MAKE) KBUILD_TYPE=release KBUILD_TARGET_ARCH=riscv64
+
+build-debug-riscv64:
+	+$(MAKE) KBUILD_TYPE=debug KBUILD_TARGET_ARCH=riscv64
 
 
 #
