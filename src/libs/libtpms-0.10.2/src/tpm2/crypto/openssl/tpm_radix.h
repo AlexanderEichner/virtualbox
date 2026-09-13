@@ -80,9 +80,9 @@
 #endif                                 // libtpms added end
 #else
 # include <iprt/cdefs.h>
-# if defined(RT_ARCH_AMD64) || defined(RT_ARCH_SPARC64) || defined(RT_ARCH_ARM64)
+# if defined(RT_ARCH_AMD64) || defined(RT_ARCH_SPARC64) || defined(RT_ARCH_ARM64) || defined(RT_ARCH_RISCV64)
 #  define RADIX_BITS                     64
-# elif defined(RT_ARCH_X86) || defined(RT_ARCH_SPARC) || defined(RT_ARCH_ARM32)
+# elif defined(RT_ARCH_X86) || defined(RT_ARCH_SPARC) || defined(RT_ARCH_ARM32) || defined(RT_ARCH_RISCV32)
 #  define  RADIX_BITS                    32
 # else
 #  error "Unknown/missing RT_ARCH_*." /* vbox: 64-bit (cannot safely use ARCH_BITS without including iprt/cdefs.h) */
