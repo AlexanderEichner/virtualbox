@@ -148,7 +148,7 @@
 /**
  * The minimum page size for the architecture.
  */
-#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64)
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_RISCV64)
 # define RT_MIN_PAGE_SIZE           4096
 #else
 # define RT_MIN_PAGE_SIZE           PAGE_SIZE
@@ -157,7 +157,7 @@
 /**
  * The shift count corresponding to RT_MIN_PAGE_SIZE.
  */
-#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64)
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_RISCV64)
 # define RT_MIN_PAGE_SHIFT          12
 #else
 # define RT_MIN_PAGE_SHIFT          PAGE_SHIFT
@@ -166,7 +166,7 @@
 /**
  * The offset mask corresponding to RT_MIN_PAGE_SIZE.
  */
-#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64)
+#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_X86) || defined(RT_ARCH_AMD64) || defined(RT_ARCH_RISCV64)
 # define RT_MIN_PAGE_OFFSET_MASK    0xfff
 #else
 # define RT_MIN_PAGE_OFFSET_MASK    PAGE_OFFSET_MASK

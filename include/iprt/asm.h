@@ -3,6 +3,7 @@
  */
 
 /*
+ * Copyright (C) 2026 Alexander Eichner <github@aeichner.de>.
  * Copyright (C) 2006-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
@@ -162,6 +163,23 @@
 # define RTASM_ARM64_USE_FEAT_LSE_WITHOUT_DMB 1
 #endif
 
+
+#if defined(RT_ARCH_RISCV64) || defined(DOXYGEN_RUNNING)
+/** @def RTASM_RISCV64_USE_EXT_ZAAMO
+ * Use instructions from the Zaamo extension set to implement atomic operations,
+ * assuming that the host CPU always supports these. */
+# define RTASM_RISCV64_USE_EXT_ZAAMO 1
+/** @def RTASM_RISCV64_USE_EXT_ZABHA
+ * Use instructions from the Zabha extension set to implement certain
+ * atomic operations, assuming that the host CPU always supports these
+ * (there is no support in silicon as of 2026-08-02). */
+/*# define RTASM_RISCV64_USE_EXT_ZABHA 1*/
+/** @def RTASM_RISCV64_USE_EXT_ZACAS
+ * Use instructions from the Zacas extension set to implement certain
+ * atomic operations, assuming that the host CPU always supports these
+ * (there is no support in silicon as of 2026-08-02). */
+/*# define RTASM_RISCV64_USE_EXT_ZACAS 1*/
+#endif
 
 /*
  * Undefine all symbols we have Watcom C/C++ #pragma aux'es for.
@@ -627,6 +645,28 @@ DECLINLINE(uint8_t) ASMAtomicXchgU8(volatile uint8_t RT_FAR *pu8, uint8_t u8) RT
     return (uint8_t)uOld;
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t uOld;
+    uint32_t rcSpill;
+    volatile uint8_t * const pu8Aligned = (volatile uint8_t *)((uintptr_t)pu8 & ~(uintptr_t)0x3);
+    uint32_t const off    = (uint32_t)(uintptr_t)pu8 & 0x3;
+    uint32_t const cShift = off * 8;
+    uint32_t const fMask  = ~(UINT32_C(0xff) << cShift);
+    uint32_t const uNew   = (uint32_t)u8 << cShift;
+    __asm__ __volatile__("Ltry_again_ASMAtomicXchgU8_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "and       %[rc], %[uOld], %[fMask]\n\t"
+                         "or        %[rc], %[rc], %[uNew]\n\t"
+                         "sc.w      %[rc], %[rc], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicXchgU8_%=\n\t"
+                         : [pMem]  "+A"  (*pu8Aligned)
+                         , [uOld]  "=&r" (uOld)
+                         , [rc]    "=&r" (rcSpill)
+                         : [uNew]  "r"   (uNew)
+                         , [fMask] "r"   (fMask)
+                         :);
+    return (uint8_t)((uOld & ~fMask) >> cShift);
+
 # else
 #  error "Port me"
 # endif
@@ -753,6 +793,28 @@ DECLINLINE(uint16_t) ASMAtomicXchgU16(volatile uint16_t RT_FAR *pu16, uint16_t u
     return (uint16_t)uOld;
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t uOld;
+    uint32_t rcSpill;
+    volatile uint16_t * const pu16Aligned = (volatile uint16_t *)((uintptr_t)pu16 & ~(uintptr_t)0x3);
+    uint32_t const off = (uint32_t)(uintptr_t)pu16 & 0x3;
+    uint32_t const cShift = off * 8;
+    uint32_t const fMask  = ~(UINT32_C(0xffff) << cShift);
+    uint32_t const uNew   = (uint32_t)u16 << cShift;
+    __asm__ __volatile__("Ltry_again_ASMAtomicXchgU16_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "and       %[rc], %[uOld], %[fMask]\n\t"
+                         "or        %[rc], %[rc], %[uNew]\n\t"
+                         "sc.w      %[rc], %[rc], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicXchgU16_%=\n\t"
+                         : [pMem]  "+A"  (*pu16Aligned)
+                         , [uOld]  "=&r" (uOld)
+                         , [rc]    "=&r" (rcSpill)
+                         : [uNew]  "r"   (uNew)
+                         , [fMask] "r"   (fMask)
+                         :);
+    return (uint16_t)((uOld & ~fMask) >> cShift);
+
 # else
 #  error "Port me"
 # endif
@@ -868,6 +930,29 @@ DECLINLINE(uint32_t) ASMAtomicXchgU32(volatile uint32_t RT_FAR *pu32, uint32_t u
 #   endif
     return uOld;
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t uOld;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicXchgU32_%=:\n\t"
+                         "amoswap.w %[uOld], %[uNew], %[pMem]\n\t"
+                         : [pMem]  "+A"  (*pu32)
+                         , [uOld]  "=r"  (uOld)
+                         : [uNew]  "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicXchgU32_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicXchgU32_%=\n\t"
+                         : [pMem]  "+A"  (*pu32)
+                         , [uOld]  "=&r" (uOld)
+                         , [rc]    "+r"  (rcSpill)
+                         : [uNew]  "r"   (u32)
+                         :);
+#  endif
+    return uOld;
 
 # else
 #  error "Port me"
@@ -1023,6 +1108,29 @@ DECLINLINE(uint64_t) ASMAtomicXchgU64(volatile uint64_t RT_FAR *pu64, uint64_t u
 #   endif
     return uOld;
 #  endif
+
+# elif defined(RT_ARCH_RISCV64)
+    uint64_t uOld;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicXchgU64_%=:\n\t"
+                         "amoswap.d %[uOld], %[uNew], %[pMem]\n\t"
+                         : [pMem]  "+A"  (*pu64)
+                         , [uOld]  "=r"  (uOld)
+                         : [uNew]  "r"   (u64)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicXchgU64_%=:\n\t"
+                         "lr.d.aq   %[uOld], %[pMem]\n\t"
+                         "sc.d      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicXchgU64_%=\n\t"
+                         : [pMem]  "+A"  (*pu64)
+                         , [uOld]  "=&r" (uOld)
+                         , [rc]    "+r"  (rcSpill)
+                         : [uNew]  "r"   (u64)
+                         :);
+#  endif
+    return uOld;
 
 # else
 #  error "Port me"
@@ -1344,6 +1452,39 @@ DECLINLINE(bool) ASMAtomicCmpXchgU8(volatile uint8_t RT_FAR *pu8, const uint8_t 
 #  endif
     return fXchg.f;
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    union { uint32_t u; bool f; } fXchg;
+    uint32_t rcSpill;
+    uint32_t u32Spill;
+    volatile uint8_t * const pu8Aligned = (volatile uint8_t *)((uintptr_t)pu8 & ~(uintptr_t)0x3);
+    uint32_t const off = (uint32_t)(uintptr_t)pu8 & 0x3;
+    uint32_t const cShift = off * 8;
+    uint32_t const fMaskClr  = UINT32_MAX & ~(UINT32_C(0xff) << cShift);
+    uint32_t const fMaskSet  = UINT32_C(0xff) << cShift;
+    uint32_t const uNew      = (uint32_t)u8New << cShift;
+    uint32_t       uOldCmp   = (uint32_t)u8Old << cShift;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgU8_%=:\n\t"
+                         "lr.w.aq   %[u32Spill], %[pMem]\n\t"
+                         "and       %[rc], %[u32Spill], %[fMaskSet]\n\t"
+                         "bne       %[rc], %[uOldCmp], 1f\n\t"
+                         "and       %[rc], %[u32Spill], %[fMaskClr]\n\t"
+                         "or        %[rc], %[rc], %[uNew]\n\t"
+                         "sc.w      %[rc], %[rc], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgU8_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu8Aligned)
+                         , [rc]       "=&r" (rcSpill)
+                         , [u32Spill] "=&r" (u32Spill)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (uNew)
+                         , [fMaskSet] "r"   (fMaskSet)
+                         , [fMaskClr] "r"   (fMaskClr)
+                         , [uOldCmp]  "r"   (uOldCmp)
+                         , "[fXchg]" (0)
+                         :);
+    return fXchg.f;
+
 # else
 #  error "Port me"
 # endif
@@ -1515,6 +1656,26 @@ DECLINLINE(bool) ASMAtomicCmpXchgU32(volatile uint32_t RT_FAR *pu32, const uint3
 #    endif
     return fXchg.f;
 #   endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    /** @todo ZACAS */
+    union { uint32_t u; bool f; } fXchg;
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgU32_%=:\n\t"
+                         "lr.w.aq   %[rc], %[pMem]\n\t"
+                         "bne       %[rc], %[uOld], 1f\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgU32_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu32)
+                         , [rc]       "=&r" (rcSpill)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (u32New)
+                         , [uOld]     "r"   (u32Old)
+                         , "[fXchg]" (0)
+                         :);
+    return fXchg.f;
 
 # else
 #  error "Port me"
@@ -1713,6 +1874,26 @@ DECLINLINE(bool) ASMAtomicCmpXchgU64(volatile uint64_t RT_FAR *pu64, uint64_t u6
 #   endif
     return fXchg.f;
 #  endif
+
+# elif defined(RT_ARCH_RISCV64)
+    /** @todo ZACAS */
+    union { uint32_t u; bool f; } fXchg;
+    uint64_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgU64_%=:\n\t"
+                         "lr.d.aq   %[rc], %[pMem]\n\t"
+                         "bne       %[rc], %[uOld], 1f\n\t"
+                         "sc.d      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgU64_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu64)
+                         , [rc]       "=&r" (rcSpill)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (u64New)
+                         , [uOld]     "r"   (u64Old)
+                         , "[fXchg]" (0)
+                         :);
+    return fXchg.f;
 
 # else
 #  error "Port me"
@@ -2114,6 +2295,40 @@ DECLINLINE(bool) ASMAtomicCmpXchgExU8(volatile uint8_t RT_FAR *pu8, const uint8_
     return fXchg.f;
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    union { uint32_t u; bool f; } fXchg;
+    uint32_t rcSpill;
+    uint32_t u32ActualOld;
+    volatile uint8_t * const pu8Aligned = (volatile uint8_t *)((uintptr_t)pu8 & ~(uintptr_t)0x3);
+    uint32_t const off = (uint32_t)(uintptr_t)pu8 & 0x3;
+    uint32_t const cShift = off * 8;
+    uint32_t const fMaskClr  = UINT32_MAX & ~(UINT32_C(0xff) << cShift);
+    uint32_t const fMaskSet  = UINT32_C(0xff) << cShift;
+    uint32_t const uNew      = (uint32_t)u8New << cShift;
+    uint32_t       uOldCmp   = (uint32_t)u8Old << cShift;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgExU8_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "and       %[rc], %[uOld], %[fMaskSet]\n\t"
+                         "bne       %[rc], %[uOldCmp], 1f\n\t"
+                         "and       %[rc], %[uOld], %[fMaskClr]\n\t"
+                         "or        %[rc], %[rc], %[uNew]\n\t"
+                         "sc.w      %[rc], %[rc], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgExU8_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu8Aligned)
+                         , [rc]       "=&r" (rcSpill)
+                         , [uOld]     "=&r" (u32ActualOld)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (uNew)
+                         , [fMaskSet] "r"   (fMaskSet)
+                         , [fMaskClr] "r"   (fMaskClr)
+                         , [uOldCmp]  "r"   (uOldCmp)
+                         , "[fXchg]" (0)
+                         :);
+    *pu8Old = (uint8_t)(u32ActualOld >> cShift);
+    return fXchg.f;
+
 # else
 #  error "Port me"
 # endif
@@ -2282,6 +2497,40 @@ DECLINLINE(bool) ASMAtomicCmpXchgExU16(volatile uint16_t RT_FAR *pu16, const uin
     return fXchg.f;
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    union { uint32_t u; bool f; } fXchg;
+    uint32_t rcSpill;
+    uint32_t u32ActualOld;
+    volatile uint16_t * const pu16Aligned = (volatile uint16_t *)((uintptr_t)pu16 & ~(uintptr_t)0x3);
+    uint32_t const off = (uint32_t)(uintptr_t)pu16 & 0x3;
+    uint32_t const cShift = off * 8;
+    uint32_t const fMaskClr  = UINT32_MAX & ~(UINT32_C(0xffff) << cShift);
+    uint32_t const fMaskSet  = UINT32_C(0xffff) << cShift;
+    uint32_t const uNew      = (uint32_t)u16New << cShift;
+    uint32_t       uOldCmp   = (uint32_t)u16Old << cShift;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgU8_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "and       %[rc], %[uOld], %[fMaskSet]\n\t"
+                         "bne       %[rc], %[uOldCmp], 1f\n\t"
+                         "and       %[rc], %[uOld], %[fMaskClr]\n\t"
+                         "or        %[rc], %[rc], %[uNew]\n\t"
+                         "sc.w      %[rc], %[rc], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgU8_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu16Aligned)
+                         , [rc]       "=&r" (rcSpill)
+                         , [uOld]     "=&r" (u32ActualOld)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (uNew)
+                         , [fMaskSet] "r"   (fMaskSet)
+                         , [fMaskClr] "r"   (fMaskClr)
+                         , [uOldCmp]  "r"   (uOldCmp)
+                         , "[fXchg]" (0)
+                         :);
+    *pu16Old = (uint16_t)(u32ActualOld >> cShift);
+    return fXchg.f;
+
 # else
 #  error "Port me"
 # endif
@@ -2447,6 +2696,29 @@ DECLINLINE(bool) ASMAtomicCmpXchgExU32(volatile uint32_t RT_FAR *pu32, const uin
 #   endif
     return fXchg.f;
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    /** @todo ZACAS */
+    union { uint32_t u; bool f; } fXchg;
+    uint32_t u32ActualOld;
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgExU32_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "bne       %[uOld], %[uOldCmp], 1f\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgExU32_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu32)
+                         , [uOld]     "=&r" (u32ActualOld)
+                         , [rc]       "=&r" (rcSpill)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (u32New)
+                         , [uOldCmp]  "r"   (u32Old)
+                         , "[fXchg]" (0)
+                         :);
+    *pu32Old = u32ActualOld;
+    return fXchg.f;
 
 # else
 #  error "Port me"
@@ -2641,6 +2913,29 @@ DECLINLINE(bool) ASMAtomicCmpXchgExU64(volatile uint64_t RT_FAR *pu64, const uin
                          : "cc");
     *pu64Old = u64ActualOld;
 #  endif
+    return fXchg.f;
+
+# elif defined(RT_ARCH_RISCV64)
+    /** @todo ZACAS */
+    union { uint32_t u; bool f; } fXchg;
+    uint64_t u64ActualOld;
+    uint64_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicCmpXchgU64_%=:\n\t"
+                         "lr.d.aq   %[uOld], %[pMem]\n\t"
+                         "bne       %[uOld], %[uOldCmp], 1f\n\t"
+                         "sc.d      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicCmpXchgU64_%=\n\t"
+                         "li        %[fXchg], 1\n\t"
+                         "1:\n\t"
+                         : [pMem]     "+A"  (*pu64)
+                         , [uOld]     "=&r" (u64ActualOld)
+                         , [rc]       "=&r" (rcSpill)
+                         , [fXchg]    "=&r" (fXchg.u)
+                         : [uNew]     "r"   (u64New)
+                         , [uOldCmp]  "r"   (u64Old)
+                         , "[fXchg]" (0)
+                         :);
+    *pu64Old = u64ActualOld;
     return fXchg.f;
 
 # else
@@ -3059,6 +3354,11 @@ DECLINLINE(void) ASMSerializeInstruction(void) RT_NOTHROW_DEF
 # else
     __asm__ __volatile__ (RTASM_ARM_DSB_SY :: RTASM_ARM_DSB_SY_IN_REG :);
 # endif
+}
+#elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+DECLINLINE(void) ASMSerializeInstruction(void) RT_NOTHROW_DEF
+{
+    __asm__ __volatile__ ("fence iorw, iorw\n\t" ::: "memory"); /** @todo Check */
 }
 #else
 # error "Port me"
@@ -3687,6 +3987,14 @@ DECLINLINE(uint64_t) ASMAtomicReadU64(volatile uint64_t RT_FAR *pu64) RT_NOTHROW
 #   endif
 #  endif
 
+# elif defined(RT_ARCH_RISCV64)
+    __asm__ __volatile__("Lstart_ASMAtomicReadU64_%=:\n\t"
+                         "fence rw, rw\n\t" /** @todo Check */
+                         "ld      %[uDst], %[pMem]\n\t"
+                         : [uDst] "=&r" (u64)
+                         : [pMem] "A" (*pu64),
+                           "0" (0));
+
 # else
 #  error "Port me"
 # endif
@@ -3792,6 +4100,13 @@ DECLINLINE(uint64_t) ASMAtomicUoReadU64(volatile uint64_t RT_FAR *pu64) RT_NOTHR
                          : [uDst] "=&r" (u64)
                          : [pMem] "Q" (*pu64));
 #  endif
+
+# elif defined(RT_ARCH_RISCV64)
+    Assert(!((uintptr_t)pu64 & 7));
+    __asm__ __volatile__("Lstart_ASMAtomicUoReadU64_%=:\n\t"
+                         "ld      %[uDst], %[pMem]\n\t"
+                         : [uDst] "=&r" (u64)
+                         : [pMem] "A" (*pu64));
 
 # else
 #  error "Port me"
@@ -5151,6 +5466,34 @@ DECLINLINE(uint32_t) ASMAtomicAddU32(uint32_t volatile RT_FAR *pu32, uint32_t u3
 # endif
     return u32OldRet;
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t u32OldRet;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicAddU32_%=:\n\t"
+                         "amoadd.w %[uOld], %[uAddend], %[pMem]\n\t"
+                         : [pMem]     "+A"  (*pu32)
+                         , [uOld]     "=r"  (u32OldRet)
+                         : [uAddend]  "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicAddU32_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+#   if defined(RT_ARCH_RISCV64)
+                         "add.uw    %[rc], %[uOld], %[uAddend]\n\t"
+#   else
+                         "add       %[rc], %[uOld], %[uAddend]\n\t"
+#   endif
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAddU32_%=\n\t"
+                         : [pMem]     "+A"  (*pu32)
+                         , [uOld]     "=&r" (u32OldRet)
+                         , [rc]       "+r"  (rcSpill)
+                         : [uAddend]  "r"   (u32)
+                         :);
+#  endif
+    return u32OldRet;
+
 # else
 #  error "Port me"
 # endif
@@ -5222,6 +5565,30 @@ DECLINLINE(uint64_t) ASMAtomicAddU64(uint64_t volatile RT_FAR *pu64, uint64_t u6
                                            "add %[uNew], %[uOld], %[uVal]\n\t"
                                            "adc %H[uNew], %H[uOld], %H[uVal]\n\t",
                                            [uVal] "r" (u64));
+#  endif
+    return u64OldRet;
+
+# elif defined(RT_ARCH_RISCV64)
+    uint64_t u64OldRet;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicAddU64_%=:\n\t"
+                         "amoadd.d %[uOld], %[uAddend], %[pMem]\n\t"
+                         : [pMem]     "+A"  (*pu64)
+                         , [uOld]     "=r"  (u64OldRet)
+                         : [uAddend]  "r"   (u64)
+                         :);
+#  else
+    uint64_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicAddU64_%=:\n\t"
+                         "lr.w.aq   %[uOld], %[pMem]\n\t"
+                         "add       %[rc], %[uOld], %[uAddend]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAddU32_%=\n\t"
+                         : [pMem]     "+A"  (*pu64)
+                         , [uOld]     "=&r" (u64OldRet)
+                         , [rc]       "+r"  (rcSpill)
+                         : [uAddend]  "r"   (u64)
+                         :);
 #  endif
     return u64OldRet;
 
@@ -5909,6 +6276,27 @@ DECLINLINE(void) ASMAtomicOrU32(uint32_t volatile RT_FAR *pu32, uint32_t u32) RT
                                            [uVal] "r" (u32));
 
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicOrU32_%=:\n\t"
+                         "amoor.w zero, %[fBitsToSet], %[pMem]\n\t"
+                         : [pMem]        "+A"  (*pu32)
+                         : [fBitsToSet]  "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicOrU32_%=:\n\t"
+                         "lr.w.aq   %[rc], %[pMem]\n\t"
+                         "or        %[rc], %[uOld], %[fBitsToSet]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAddU32_%=\n\t"
+                         : [pMem]        "+A"  (*pu32)
+                         , [rc]          "+r"  (rcSpill)
+                         : [fBitsToSet]  "r"   (u32)
+                         :);
+#  endif
+
 # else
 #  error "Port me"
 # endif
@@ -5949,6 +6337,30 @@ DECLINLINE(uint32_t) ASMAtomicOrExU32(uint32_t volatile RT_FAR *pu32, uint32_t u
                                            "orr %[uNew], %[uOld], %[uVal]\n\t",
                                            [uVal] "r" (u32));
 #   endif
+    return u32OldRet;
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t u32OldRet;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicOrU32_%=:\n\t"
+                         "amoor.w %[uOldRet], %[fBitsToSet], %[pMem]\n\t"
+                         : [pMem]       "+A"  (*pu32)
+                         , [uOldRet]    "=&r" (u32OldRet)
+                         : [fBitsToSet] "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicOrU32_%=:\n\t"
+                         "lr.w.aq   %[uOldRet], %[pMem]\n\t"
+                         "or        %[rc], %[uOldRet], %[fBitsToSet]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicOrU32_%=\n\t"
+                         : [pMem]        "+A"  (*pu32)
+                         , [rc]          "+r"  (rcSpill)
+                         , [uOldRet]     "+&r" (u32OldRet)
+                         : [fBitsToSet]  "r"   (u32)
+                         :);
+#  endif
     return u32OldRet;
 
 #else
@@ -6024,6 +6436,26 @@ DECLINLINE(void) ASMAtomicOrU64(uint64_t volatile RT_FAR *pu64, uint64_t u64) RT
                                            "orr %[uNew], %[uNew], %[uVal]\n\t"
                                            "orr %H[uNew], %H[uNew], %H[uVal]\n\t",
                                            [uVal] "r" (u64));
+#  endif
+
+# elif defined(RT_ARCH_RISCV64)
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicOrU64_%=:\n\t"
+                         "amoor.d zero, %[fBitsToSet], %[pMem]\n\t"
+                         : [pMem]       "+A"  (*pu64)
+                         : [fBitsToSet] "r"   (u64)
+                         :);
+#  else
+    uint64_t u64Spill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicOrU64_%=:\n\t"
+                         "lr.d.aq   %[rc], %[pMem]\n\t"
+                         "or        %[rc], %[rc], %[fBitsToSet]\n\t"
+                         "sc.d      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicOrU64_%=\n\t"
+                         : [pMem]        "+A"  (*pu64)
+                         , [rc]          "+r"  (u64Spill)
+                         : [fBitsToSet]  "r"   (u64)
+                         :);
 #  endif
 
 # else
@@ -6116,6 +6548,27 @@ DECLINLINE(void) ASMAtomicAndU32(uint32_t volatile RT_FAR *pu32, uint32_t u32) R
                                            [uVal] "r" (u32));
 
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicAndU32_%=:\n\t"
+                         "amoand.w zero, %[fBits], %[pMem]\n\t"
+                         : [pMem]   "+A"  (*pu32)
+                         : [fBits]  "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicAndU32_%=:\n\t"
+                         "lr.w.aq   %[rc], %[pMem]\n\t"
+                         "and       %[rc], %[uOld], %[fBits]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAndU32_%=\n\t"
+                         : [pMem]   "+A"  (*pu32)
+                         , [rc]     "+r"  (rcSpill)
+                         : [fBits]  "r"   (u32)
+                         :);
+#  endif
+
 # else
 #  error "Port me"
 # endif
@@ -6155,6 +6608,30 @@ DECLINLINE(uint32_t) ASMAtomicAndExU32(uint32_t volatile RT_FAR *pu32, uint32_t 
                                            "and %[uNew], %[uOld], %[uVal]\n\t",
                                            [uVal] "r" (u32));
 # endif
+    return u32OldRet;
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t u32OldRet;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicAndExU32_%=:\n\t"
+                         "amoand.w %[uOldRet], %[fBits], %[pMem]\n\t"
+                         : [pMem]    "+A"  (*pu32)
+                         , [uOldRet] "=&r" (u32OldRet)
+                         : [fBits]   "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicAndExU32_%=:\n\t"
+                         "lr.w.aq   %[uOldRet], %[pMem]\n\t"
+                         "and       %[rc], %[uOldRet], %[fBits]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAndExU32_%=\n\t"
+                         : [pMem]        "+A"  (*pu32)
+                         , [rc]          "+r"  (rcSpill)
+                         , [uOldRet]     "+&r" (u32OldRet)
+                         : [fBits]  "r"   (u32)
+                         :);
+#  endif
     return u32OldRet;
 
 #else
@@ -6230,6 +6707,26 @@ DECLINLINE(void) ASMAtomicAndU64(uint64_t volatile RT_FAR *pu64, uint64_t u64) R
                                            "and %[uNew], %[uNew], %[uVal]\n\t"
                                            "and %H[uNew], %H[uNew], %H[uVal]\n\t",
                                            [uVal] "r" (u64));
+#  endif
+
+# elif defined(RT_ARCH_RISCV64)
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicAndU64_%=:\n\t"
+                         "amoand.d zero, %[fBits], %[pMem]\n\t"
+                         : [pMem]   "+A"  (*pu64)
+                         : [fBits]  "r"   (u64)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicAndU64_%=:\n\t"
+                         "lr.d.aq   %[rc], %[pMem]\n\t"
+                         "and       %[rc], %[uOld], %[fBits]\n\t"
+                         "sc.d      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAndU64_%=\n\t"
+                         : [pMem]   "+A"  (*pu64)
+                         , [rc]     "+r"  (rcSpill)
+                         : [fBits]  "r"   (u64)
+                         :);
 #  endif
 
 # else
@@ -6322,6 +6819,26 @@ DECLINLINE(void) ASMAtomicXorU32(uint32_t volatile RT_FAR *pu32, uint32_t u32) R
                                            [uVal] "r" (u32));
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicXorU32_%=:\n\t"
+                         "amoxor.w zero, %[fBits], %[pMem]\n\t"
+                         : [pMem]   "+A"  (*pu32)
+                         : [fBits]  "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicXorU32_%=:\n\t"
+                         "lr.w.aq   %[rc], %[pMem]\n\t"
+                         "xor       %[rc], %[uOld], %[fBits]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicXorU32_%=\n\t"
+                         : [pMem]   "+A"  (*pu32)
+                         , [rc]     "+r"  (rcSpill)
+                         : [fBits]  "r"   (u32)
+                         :);
+#  endif
+
 # else
 #  error "Port me"
 # endif
@@ -6362,6 +6879,30 @@ DECLINLINE(uint32_t) ASMAtomicXorExU32(uint32_t volatile RT_FAR *pu32, uint32_t 
                                            "eor %[uNew], %[uOld], %[uVal]\n\t",
                                            [uVal] "r" (u32));
 # endif
+    return u32OldRet;
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    uint32_t u32OldRet;
+#  if defined(RTASM_RISCV64_USE_EXT_ZAAMO)
+    __asm__ __volatile__("Lstart_ASMAtomicAndExU32_%=:\n\t"
+                         "amoxor.w %[uOldRet], %[fBits], %[pMem]\n\t"
+                         : [pMem]    "+A"  (*pu32)
+                         , [uOldRet] "=&r" (u32OldRet)
+                         : [fBits]   "r"   (u32)
+                         :);
+#  else
+    uint32_t rcSpill;
+    __asm__ __volatile__("Ltry_again_ASMAtomicAndExU32_%=:\n\t"
+                         "lr.w.aq   %[uOldRet], %[pMem]\n\t"
+                         "xor       %[rc], %[uOldRet], %[fBits]\n\t"
+                         "sc.w      %[rc], %[uNew], %[pMem]\n\t"
+                         "bnez      %[rc], Ltry_again_ASMAtomicAndExU32_%=\n\t"
+                         : [pMem]        "+A"  (*pu32)
+                         , [rc]          "+r"  (rcSpill)
+                         , [uOldRet]     "+&r" (u32OldRet)
+                         : [fBits]  "r"   (u32)
+                         :);
+#  endif
     return u32OldRet;
 
 #else
@@ -6440,6 +6981,9 @@ DECLINLINE(void) ASMAtomicUoOrU32(uint32_t volatile RT_FAR *pu32, uint32_t u32) 
                                            "orr %[uNew], %[uNew], %[uVal]\n\t",
                                            [uVal] "r" (u32));
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    ASMAtomicOrU32(pu32, u32); /** @todo */
 
 # else
 #  error "Port me"
@@ -6539,6 +7083,9 @@ DECLINLINE(void) ASMAtomicUoOrU64(uint64_t volatile RT_FAR *pu64, uint64_t u64) 
                                            [uVal] "r" (u64));
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    ASMAtomicOrU64(pu64, u64); /** @todo */
+
 # else
     for (;;)
     {
@@ -6617,6 +7164,9 @@ DECLINLINE(void) ASMAtomicUoAndU32(uint32_t volatile RT_FAR *pu32, uint32_t u32)
                                            "and %[uNew], %[uNew], %[uVal]\n\t",
                                            [uVal] "r" (u32));
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    ASMAtomicAndU32(pu32, u32); /** @todo */
 
 # else
 #  error "Port me"
@@ -6715,6 +7265,9 @@ DECLINLINE(void) ASMAtomicUoAndU64(uint64_t volatile RT_FAR *pu64, uint64_t u64)
                                            [uVal] "r" (u64));
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    ASMAtomicAndU64(pu64, u64); /** @todo */
+
 # else
     for (;;)
     {
@@ -6792,6 +7345,9 @@ DECLINLINE(void) ASMAtomicUoXorU32(uint32_t volatile RT_FAR *pu32, uint32_t u32)
                                            "eor %[uNew], %[uNew], %[uVal]\n\t",
                                            [uVal] "r" (u32));
 #  endif
+
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    ASMAtomicXorU32(pu32, u32); /** @todo */
 
 # else
 #  error "Port me"
@@ -6914,6 +7470,9 @@ DECLINLINE(uint32_t) ASMAtomicUoIncU32(uint32_t volatile RT_FAR *pu32) RT_NOTHRO
     return u32NewRet;
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    return ASMAtomicAddU32(pu32, 1) + 1; /** @todo */
+
 # else
 #  error "Port me"
 # endif
@@ -6984,6 +7543,9 @@ DECLINLINE(uint32_t) ASMAtomicUoDecU32(uint32_t volatile RT_FAR *pu32) RT_NOTHRO
     return u32NewRet;
 #  endif
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    return ASMAtomicSubU32(pu32, 1) - 1; /** @todo */
+
 # else
 #  error "Port me"
 # endif
@@ -7033,6 +7595,9 @@ DECLINLINE(uint16_t) ASMByteSwapU16(uint16_t u16) RT_NOTHROW_DEF
                          : [uVal] "r" (u16));
     return (uint16_t)u32Ret;
 
+# elif defined(RT_ARCH_RISCV32) || defined(RT_ARCH_RISCV64)
+    return (u16 >> 8) | (u16 << 8); /** @todo */
+
 # else
 #  error "Port me"
 # endif
@@ -7080,6 +7645,16 @@ DECLINLINE(uint32_t) ASMByteSwapU32(uint32_t u32) RT_NOTHROW_DEF
                          : [uVal] "[uRet]" (u32));
     return u32;
 
+# elif defined(RT_ARCH_RISCV32) /** @todo rev8 is part of Zbb extension */
+    __asm__ __volatile__("rev8      %[uRet], %[uVal]\n\t"
+                         : [uRet] "=r" (u32)
+                         : [uVal] "[uRet]" (u32));
+    return u32;
+
+# elif defined(RT_ARCH_RISCV64)
+    return (uint32_t)ASMByteSwapU16((uint16_t)u32) << 16
+         | (uint32_t)ASMByteSwapU16((uint16_t)(u32 >> 16));
+
 # else
 #  error "Port me"
 # endif
@@ -7104,6 +7679,12 @@ DECLINLINE(uint64_t) ASMByteSwapU64(uint64_t u64) RT_NOTHROW_DEF
 
 # elif defined(RT_ARCH_ARM64)
     __asm__ __volatile__("rev       %[uRet], %[uVal]\n\t"
+                         : [uRet] "=r" (u64)
+                         : [uVal] "[uRet]" (u64));
+    return u64;
+
+# elif defined(RT_ARCH_RISCV64) /** @todo rev8 is part of Zbb extension */
+    __asm__ __volatile__("rev8      %[uRet], %[uVal]\n\t"
                          : [uRet] "=r" (u64)
                          : [uVal] "[uRet]" (u64));
     return u64;
@@ -8313,6 +8894,21 @@ DECLINLINE(unsigned) ASMBitFirstSetU32(uint32_t u32) RT_NOTHROW_DEF
     else
         iBit = 0; /* No bit set. */
 
+# elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    uint32_t iBit;
+    __asm__ __volatile__(
+#  if defined(RT_ARCH_RISCV64)
+                         "zext.w %[uVal], %[uVal]\n\t"
+#  endif
+                         "ctz  %[iBit], %[uVal]\n\t"
+                         : [uVal] "=r" (u32)
+                         , [iBit] "=r" (iBit)
+                         : "[uVal]" (u32));
+    if (iBit < 32)
+        iBit++;
+    else
+        iBit = 0; /* No bit set. */
+
 # else
 #  error "Port me"
 # endif
@@ -8384,6 +8980,18 @@ DECLINLINE(unsigned) ASMBitFirstSetU64(uint64_t u64) RT_NOTHROW_DEF
     uint64_t iBit;
     __asm__ __volatile__("rbit %[uVal], %[uVal]\n\t"
                          "clz  %[iBit], %[uVal]\n\t"
+                         : [uVal] "=r" (u64)
+                         , [iBit] "=r" (iBit)
+                         : "[uVal]" (u64));
+    if (iBit != 64)
+        iBit++;
+    else
+        iBit = 0; /* No bit set. */
+
+# elif defined(RT_ARCH_RISCV64)
+    uint32_t iBit;
+    __asm__ __volatile__(
+                         "ctz  %[iBit], %[uVal]\n\t"
                          : [uVal] "=r" (u64)
                          , [iBit] "=r" (iBit)
                          : "[uVal]" (u64));
@@ -8487,6 +9095,21 @@ DECLINLINE(unsigned) ASMBitLastSetU32(uint32_t u32) RT_NOTHROW_DEF
                          : [uVal] "r" (u32));
     iBit = 32 - iBit;
 
+# elif defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
+    uint32_t iBit;
+    __asm__ __volatile__(
+#  if defined(RT_ARCH_RISCV64)
+                         "zext.w %[iBit], %[uVal]\n\t"
+#  endif
+                         "clz  %[iBit], %[iBit]\n\t"
+                         : [iBit] "=r" (iBit)
+                         : [uVal] "r" (u32));
+#  if defined(RT_ARCH_RISCV64)
+    iBit = 64 - iBit;
+#else
+    iBit = 32 - iBit;
+#  endif
+
 # else
 #  error "Port me"
 # endif
@@ -8557,6 +9180,13 @@ DECLINLINE(unsigned) ASMBitLastSetU64(uint64_t u64) RT_NOTHROW_DEF
 # elif defined(RT_ARCH_ARM64)
     uint64_t iBit;
     __asm__ __volatile__("clz  %[iBit], %[uVal]\n\t"
+                         : [iBit] "=r" (iBit)
+                         : [uVal] "r" (u64));
+    iBit = 64 - iBit;
+
+# elif defined(RT_ARCH_RISCV64)
+    uint64_t iBit;
+    __asm__ __volatile__("clz  %[iBit], %[iBit]\n\t"
                          : [iBit] "=r" (iBit)
                          : [uVal] "r" (u64));
     iBit = 64 - iBit;
@@ -9149,6 +9779,11 @@ DECLINLINE(void *) ASMReadStackPointer(void) RT_NOTHROW_DEF
 #elif defined(RT_ARCH_ARM64)
     __asm__ __volatile__("Lstart_ASMReadStackPointer_%=:\n\t"
                          "mov %0, sp\n\t"
+                         : "=r" (pv));
+
+#elif defined(RT_ARCH_RISCV64)
+    __asm__ __volatile__("Lstart_ASMReadStackPointer_%=:\n\t"
+                         "mv %0, sp\n\t"
                          : "=r" (pv));
 
 #else

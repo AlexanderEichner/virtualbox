@@ -5724,6 +5724,8 @@ DECLHIDDEN(int) rtldrFatOpen(PRTLDRREADER pReader, uint32_t fFlags, RTLDRARCH en
                 break;
 
             case RTLDRARCH_X86_16:
+            case RTLDRARCH_RISCV32:
+            case RTLDRARCH_RISCV64:
                 fMatch = false;
                 break;
 

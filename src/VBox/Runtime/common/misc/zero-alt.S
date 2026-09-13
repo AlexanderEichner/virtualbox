@@ -40,7 +40,7 @@
         .section    __TEXT,__text,regular,pure_instructions
         .section    __TEXT,__const
 # define NAME(a) _##a
-#elif defined(ASM_FORMAT_ELF) && (defined(RT_ARCH_ARM64) || defined(RT_ARCH_SPARC) || defined(RT_ARCH_SPARC64))
+#elif defined(ASM_FORMAT_ELF) && (defined(RT_ARCH_ARM64) || defined(RT_ARCH_SPARC) || defined(RT_ARCH_SPARC64) || defined(RT_ARCH_RISCV64))
 /* Putting it in the rodata segment/section for now. */
         .file       "zero-alt.S"
         .section    ".rodata"
@@ -58,7 +58,9 @@
 # ifdef NEED_HIDDEN
         .hidden     NAME(g_abRTZeroPage)
 # endif
+# ifndef RT_ARCH_RISCV64
         .type       NAME(g_abRTZeroPage),#object
+# endif
 # if defined(RT_ARCH_SPARC) || defined(RT_ARCH_SPARC64)
         .size       NAME(g_abRTZeroPage),8192
 # else
@@ -71,7 +73,9 @@ NAME(g_abRTZeroPage):
 # ifdef NEED_HIDDEN
         .hidden     NAME(g_abRTZero4K)
 # endif
+# ifndef RT_ARCH_RISCV64
         .type       NAME(g_abRTZero4K),#object
+# endif
         .size       NAME(g_abRTZero4K),4096
 #endif
 NAME(g_abRTZero4K):
@@ -80,7 +84,9 @@ NAME(g_abRTZero4K):
 # ifdef NEED_HIDDEN
         .hidden     NAME(g_abRTZero8K)
 # endif
+# ifndef RT_ARCH_RISCV64
         .type       NAME(g_abRTZero8K),#object
+# endif
         .size       NAME(g_abRTZero8K),8192
 #endif
 NAME(g_abRTZero8K):
@@ -89,7 +95,9 @@ NAME(g_abRTZero8K):
 # ifdef NEED_HIDDEN
         .hidden     NAME(g_abRTZero16K)
 # endif
+# ifndef RT_ARCH_RISCV64
         .type       NAME(g_abRTZero16K),#object
+# endif
         .size       NAME(g_abRTZero16K),16384
 #endif
 NAME(g_abRTZero16K):
@@ -98,7 +106,9 @@ NAME(g_abRTZero16K):
 # ifdef NEED_HIDDEN
         .hidden     NAME(g_abRTZero32K)
 # endif
+# ifndef RT_ARCH_RISCV64
         .type       NAME(g_abRTZero32K),#object
+# endif
         .size       NAME(g_abRTZero32K),32768
 #endif
 NAME(g_abRTZero32K):
@@ -107,7 +117,9 @@ NAME(g_abRTZero32K):
 # ifdef NEED_HIDDEN
         .hidden     NAME(g_abRTZero64K)
 # endif
+# ifndef RT_ARCH_RISCV64
         .type       NAME(g_abRTZero64K),#object
+# endif
         .size       NAME(g_abRTZero64K),65536
 #endif
 NAME(g_abRTZero64K):

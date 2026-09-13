@@ -52,7 +52,8 @@
 #include <iprt/linux/sysfs.h>
 
 
-#if defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32)
+#if    defined(RT_ARCH_ARM64) || defined(RT_ARCH_ARM32) \
+    || defined(RT_ARCH_RISCV64) || defined(RT_ARCH_RISCV32)
 # include <sched.h>
 
 RTDECL(RTCPUID) RTMpCpuId(void)
