@@ -140,6 +140,56 @@ ifdef VBOX_WITH_TESTCASES
 
  endif
 
+
+ if1of ($(KBUILD_TARGET_ARCH), riscv64)
+  #
+  # tstDisasmRiscV-1 assembly files -> .cpp
+  #
+  TST_DISASM_RISCV_1_FILE = $(tstDisasmRiscV-1_0_OUTDIR)/tstDisasmRiscV-1-asm.cpp
+  TST_DISASM_RISCV_1_SOURCES := \
+  	tstDisasmRiscV_1=tstDisasmRiscV-1-asm.S
+
+  TST_DISASM_RISCV_1_PATH_SOURCES := $(PATH_SUB_CURRENT)
+
+  $$(TST_DISASM_RISCV_1_FILE): $(MAKEFILE_CURRENT) \
+  		$(foreach source,$(TST_DISASM_RISCV_1_SOURCES),$(TST_DISASM_RISCV_1_PATH_SOURCES)/$(lastword $(subst =,$(SP),$(source)))) \
+  		$(VBOX_BIN2C) \
+  		| $$(dir $$@)
+	$(QUIET)$(RM) -f -- $@
+	$(QUIET)$(APPEND) -n "$@" \
+        	'' \
+        	'#include "tstDisasmRiscV-1-tests.h"' \
+               ''
+	$(foreach source,$(TST_DISASM_RISCV_1_SOURCES), $(NLTAB)$(VBOX_BIN2C) -ascii --append \
+		"$(firstword $(subst =,$(SP),$(source)))" \
+		"$(TST_DISASM_RISCV_1_PATH_SOURCES)/$(lastword $(subst =,$(SP),$(source)))" \
+		"$@")
+
+  OTHER_CLEAN += $(TST_DISASM_RISCV_1_FILE)
+
+  PROGRAMS += tstDisasmRiscV-1
+  tstDisasmRiscV-1_TEMPLATE   = VBoxR3TstExe
+  tstDisasmRiscV-1_DEFS       = \
+  	IN_DIS \
+  	$(if $(TST_DISASM_RISCV_WITH_FULL_TESTCASES),TST_DISASM_RISCV_WITH_FULL_TESTCASES,)
+  tstDisasmRiscV-1_INCS = \
+  	.
+  tstDisasmRiscV-1_SOURCES    = \
+  	$(TST_DISASM_RISCV_1_FILE) \
+  	tstDisasmRiscV-1-asm.S \
+  	tstDisasmRiscV-1.cpp
+  tstDisasmRiscV-1_LIBS       = \
+  	$(PATH_STAGE_LIB)/DisasmR3$(VBOX_SUFF_LIB) \
+  	$(LIB_RUNTIME)
+
+  if defined(TST_DISASM_WITH_CAPSTONE_DISASSEMBLER)
+   tstDisasmRiscV-1_DEFS        += TST_DISASM_WITH_CAPSTONE_DISASSEMBLER
+   tstDisasmRiscV-1_LIBS.linux  += capstone
+  endif
+
+ endif
+
+
  # Tests that will be build, disassembled and re-build from disassembly.
  VBOX_DISAS_TESTS_BUILD = \
  	tstAsmFnstsw-1.asm \

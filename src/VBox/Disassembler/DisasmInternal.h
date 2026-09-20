@@ -210,6 +210,10 @@ DECLHIDDEN(int)         disInstrWorkerX86(PDISSTATE pDis, PCDISOPCODE paOneByteM
 DECLHIDDEN(PCDISOPCODE) disInitializeStateArmV8(PDISSTATE pDis, DISCPUMODE enmCpuMode, uint32_t fFilter);
 DECLHIDDEN(int)         disInstrWorkerArmV8(PDISSTATE pDis, PCDISOPCODE paOneByteMap, uint32_t *pcbInstr);
 #endif
+#if defined(VBOX_DIS_WITH_RISCV)
+DECLHIDDEN(PCDISOPCODE) disInitializeStateRiscV(PDISSTATE pDis, DISCPUMODE enmCpuMode, uint32_t fFilter);
+DECLHIDDEN(int)         disInstrWorkerRiscV(PDISSTATE pDis, PCDISOPCODE paOneByteMap, uint32_t *pcbInstr);
+#endif
 
 size_t disFormatBytes(PCDISSTATE pDis, char *pszDst, size_t cchDst, uint32_t fFlags);
 

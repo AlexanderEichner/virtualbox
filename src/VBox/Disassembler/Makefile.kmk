@@ -56,6 +56,13 @@ if 1
  	DisasmTables-armv8-a64.cpp \
  	DisasmFormatArmV8.cpp
 endif
+if 1
+ DisasmR3_DEFS          += VBOX_DIS_WITH_RISCV
+ DisasmR3_SOURCES       += \
+ 	DisasmCore-riscv.cpp \
+ 	DisasmTables-riscv.cpp \
+ 	DisasmFormatRiscV.cpp
+endif
 
 ifn1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.arm64)
  LIBRARIES             += DisasmR3Static
