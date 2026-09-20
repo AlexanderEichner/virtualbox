@@ -44,6 +44,9 @@
 #if defined(VBOX_DIS_WITH_ARMV8)
 # include <VBox/dis-armv8.h>
 #endif
+#if defined(VBOX_DIS_WITH_RISCV)
+# include <VBox/dis-riscv.h>
+#endif
 #include <iprt/assert.h>
 
 
@@ -257,6 +260,10 @@ typedef struct DISOPPARAM
         /** ARMv8 specific state. */
         DIS_OP_PARAM_ARMV8_T    armv8;
 #endif
+#if defined(VBOX_DIS_WITH_RISCV)
+        /** RISC-V specific state. */
+        DIS_OP_PARAM_RISCV_T    riscv;
+#endif
     };
 } DISOPPARAM;
 AssertCompileSize(DISOPPARAM, 32);
@@ -352,6 +359,10 @@ typedef struct DISSTATE
 #if defined(VBOX_DIS_WITH_ARMV8)
         /** ARMv8 specific state. */
         DIS_STATE_ARMV8_T   armv8;
+#endif
+#if defined(VBOX_DIS_WITH_RISCV)
+        /** RISC-V specific state. */
+        DIS_STATE_RISCV_T   riscv;
 #endif
     };
 } DISSTATE;
@@ -568,6 +579,9 @@ DISDECL(size_t) DISFormatGasEx( PCDISSTATE pDis, char *pszBuf, size_t cchBuf, ui
 
 DISDECL(size_t) DISFormatArmV8(  PCDISSTATE pDis, char *pszBuf, size_t cchBuf);
 DISDECL(size_t) DISFormatArmV8Ex(PCDISSTATE pDis, char *pszBuf, size_t cchBuf, uint32_t fFlags, PFNDISGETSYMBOL pfnGetSymbol, void *pvUser);
+
+DISDECL(size_t) DISFormatRiscV(  PCDISSTATE pDis, char *pszBuf, size_t cchBuf);
+DISDECL(size_t) DISFormatRiscVEx(PCDISSTATE pDis, char *pszBuf, size_t cchBuf, uint32_t fFlags, PFNDISGETSYMBOL pfnGetSymbol, void *pvUser);
 
 /** @todo DISAnnotate(PCDISSTATE pDis, char *pszBuf, size_t cchBuf, register
  *        reader, memory reader); */

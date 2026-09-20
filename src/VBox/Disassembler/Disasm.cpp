@@ -321,6 +321,13 @@ disInitializeState(PDISSTATE pDis, RTUINTPTR uInstrAddr, DISCPUMODE enmCpuMode, 
 #else
             return NULL;
 #endif
+        case DISCPUMODE_RISCV_RV64:
+        case DISCPUMODE_RISCV_RV32:
+#if defined(VBOX_DIS_WITH_ARMV8)
+            return disInitializeStateRiscV(pDis, enmCpuMode, fFilter);
+#else
+            return NULL;
+#endif
         default:
             break;
     }
@@ -367,6 +374,13 @@ DISDECL(int) DISInstrEx(RTUINTPTR uInstrAddr, DISCPUMODE enmCpuMode, uint32_t fF
         case DISCPUMODE_ARMV8_T32:
 #if defined(VBOX_DIS_WITH_ARMV8)
             return disInstrWorkerArmV8(pDis, paOneByteMap, pcbInstr);
+#else
+            return VERR_NOT_SUPPORTED;
+#endif
+        case DISCPUMODE_RISCV_RV64:
+        case DISCPUMODE_RISCV_RV32:
+#if defined(VBOX_DIS_WITH_RISCV)
+            return disInstrWorkerRiscV(pDis, NULL, pcbInstr);
 #else
             return VERR_NOT_SUPPORTED;
 #endif
@@ -435,6 +449,13 @@ DISDECL(int) DISInstrWithPrefetchedBytes(RTUINTPTR uInstrAddr, DISCPUMODE enmCpu
         case DISCPUMODE_ARMV8_T32:
 #if defined(VBOX_DIS_WITH_ARMV8)
             return disInstrWorkerArmV8(pDis, paOneByteMap, pcbInstr);
+#else
+            return VERR_NOT_SUPPORTED;
+#endif
+        case DISCPUMODE_RISCV_RV64:
+        case DISCPUMODE_RISCV_RV32:
+#if defined(VBOX_DIS_WITH_RISCV)
+            return disInstrWorkerRiscV(pDis, paOneByteMap, pcbInstr);
 #else
             return VERR_NOT_SUPPORTED;
 #endif
@@ -591,6 +612,17 @@ DISDECL(int) DISInstrToStrEx(RTUINTPTR uInstrAddr, DISCPUMODE enmCpuMode,
             case DISCPUMODE_ARMV8_T32:
 #if defined(VBOX_DIS_WITH_ARMV8)
                 cch = DISFormatArmV8Ex(pDis, pszOutput, cbOutput,
+                                         DIS_FMT_FLAGS_BYTES_LEFT | DIS_FMT_FLAGS_BYTES_BRACKETS | DIS_FMT_FLAGS_BYTES_SPACED
+                                       | DIS_FMT_FLAGS_RELATIVE_BRANCH | DIS_FMT_FLAGS_ADDR_LEFT,
+                                       NULL /*pfnGetSymbol*/, NULL /*pvUser*/);
+#else
+               AssertReleaseFailed(); /* Shouldn't ever get here (DISInstrEx() returning VERR_NOT_SUPPORTED). */
+#endif
+                break;
+            case DISCPUMODE_RISCV_RV64:
+            case DISCPUMODE_RISCV_RV32:
+#if defined(VBOX_DIS_WITH_RISCV)
+                cch = DISFormatRiscVEx(pDis, pszOutput, cbOutput,
                                          DIS_FMT_FLAGS_BYTES_LEFT | DIS_FMT_FLAGS_BYTES_BRACKETS | DIS_FMT_FLAGS_BYTES_SPACED
                                        | DIS_FMT_FLAGS_RELATIVE_BRANCH | DIS_FMT_FLAGS_ADDR_LEFT,
                                        NULL /*pfnGetSymbol*/, NULL /*pvUser*/);
