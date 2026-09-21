@@ -3497,6 +3497,8 @@ ifndef VBOX_NOINC_DYNAMIC_CONFIG_KMK
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_Wno-inline                      ?= $(call VBOX_GCC_CHECK_CXX,-Wno-inline,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_Wno-unknown-pragmas             ?= $(call VBOX_GCC_CHECK_CXX,-Wno-unknown-pragmas,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_Wno-deprecated-copy             ?= $(call VBOX_GCC_CHECK_CXX,-Wno-deprecated-copy,)'
+	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_Wno-volatile                    ?= $(call VBOX_GCC_CHECK_CXX,-Wno-volatile,)'
+	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_Wno-deprecated-enum-float-conversion ?= $(call VBOX_GCC_CHECK_CXX,-Wno-deprecated-enum-float-conversion,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fno-stack-protector             ?= $(call VBOX_GCC_CHECK_CC,-fno-stack-protector,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fno-dwarf2-cfi-asm              ?= $(call VBOX_GCC_CHECK_CC,-fno-dwarf2-cfi-asm,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_m64                             ?= $(call VBOX_GCC_CHECK_CC,-m64,)'
@@ -3690,7 +3692,9 @@ endif # !VBOX_NOINC_DYNAMIC_CONFIG_KMK
 #
 ## @todo consider maxing this out.
 ifndef VBOX_GCC_std
- if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.arm64 linux.arm64 linux.riscv64) # Go straight for c++17 here.
+ if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), linux.riscv64) # Go straight for c++20 here.
+  VBOX_GCC_std := -std=c++20
+ else if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.arm64 linux.arm64) # Go straight for c++17 here.
   VBOX_GCC_std := -std=c++17
   # else if "$(VBOX_CLANG_VERSION_CXX)" vge 60000 # Most language features complete by v6. Lib stuff was less complete in v6, but hopefully acceptable for out purposes.
   #VBOX_GCC_std := -std=c++17
@@ -3752,6 +3756,14 @@ endif
 # Stupid problem with (__typeof__((*ppv)) casts in asm.h where volatile is involved and ignored.
 if $(VBOX_GCC_VERSION_CXX) >= 80000 && "$(VBOX_GCC_Wno-ignored-qualifiers)"
  VBOX_GCC_PEDANTIC_CXX += $(VBOX_GCC_Wno-ignored-qualifiers)
+endif
+# Disable XXX expression of ‘volatile’-qualified type is deprecated when using C++20
+if $(VBOX_GCC_VERSION_CXX) >= 80000 && "$(VBOX_GCC_Wno-volatile)"
+ VBOX_GCC_PEDANTIC_CXX += $(VBOX_GCC_Wno-volatile)
+endif
+# Disable arithmetic between floating-point type ‘float’ and enumeration type ‘PDMACPIBATCAPACITY’ is deprecated when using C++20
+if $(VBOX_GCC_VERSION_CXX) >= 80000 && "$(VBOX_GCC_Wno-deprecated-enum-float-conversion)"
+ VBOX_GCC_PEDANTIC_CXX += $(VBOX_GCC_Wno-deprecated-enum-float-conversion)
 endif
 
 
