@@ -303,6 +303,10 @@ DISDECL(size_t) DISFormatRiscVEx(PCDISSTATE pDis, char *pszBuf, size_t cchBuf, u
                     switch (pParam->fUse & (  DISUSE_IMMEDIATE8 | DISUSE_IMMEDIATE16 | DISUSE_IMMEDIATE32 | DISUSE_IMMEDIATE64
                                             | DISUSE_IMMEDIATE16_SX8 | DISUSE_IMMEDIATE32_SX8 | DISUSE_IMMEDIATE64_SX8))
                     {
+                        case DISUSE_IMMEDIATE8:
+                            PUT_NUM_8(pParam->uValue);
+                            /** @todo Symbols */
+                            break;
                         case DISUSE_IMMEDIATE32:
                             PUT_NUM_S32(pParam->uValue);
                             /** @todo Symbols */
@@ -321,6 +325,16 @@ DISDECL(size_t) DISFormatRiscVEx(PCDISSTATE pDis, char *pszBuf, size_t cchBuf, u
                 {
                     RTUINTPTR uTrgAddr = pDis->uInstrAddr;
                     int64_t offDisplacement;
+
+                    /*
+                     * Explicit immediate constants are required to be prepended by a dot with gas or llvm,
+                     * or they get treated as either relative or absolute addresses and get interfered with
+                     * by the linker.
+                     *
+                     * However auipc seems to be different here.
+                     */
+                    if (pOp->uOpcode != OP_RISCV_AUIPC)
+                        PUT_C('.');
 
                     if (pParam->fUse & DISUSE_IMMEDIATE8_REL)
                     {
