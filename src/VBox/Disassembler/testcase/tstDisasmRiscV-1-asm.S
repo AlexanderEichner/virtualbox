@@ -114,12 +114,80 @@ BEGINPROC_HIDDEN TestProcRiscV
         andi x2, x3, 2047
         andi x2, x3, -2048
 
-        /** @todo slli, slri, srai */
+        slli x2, x3, 0
+        slli x2, x3, 1
+        slli x2, x3, 63
+
+        srli x2, x3, 0
+        srli x2, x3, 1
+        srli x2, x3, 63
+
+        srai x2, x3, 0
+        srai x2, x3, 1
+        srai x2, x3, 63
 
         /* JALR */
         jalr x0, 0(x2)
         jalr x0, -2048(x2)
         jalr x0, 2047(x2)
+
+        /* JAL */
+        jal x0, .+0
+        jal x0, .+0x100
+        jal x0, .-0x100
+        jal x0, .-4
+        jal x0, .+4
+        jal x1, .-1048576
+        jal x1, .+1048574
+
+        /* Branches */
+        beq x2, x31, .+0
+        beq x2, x31, .+2
+        beq x2, x31, .-2
+        beq x2, x31, .+4094
+        beq x2, x31, .-4096
+        beq x2, x31, .+254
+        beq x2, x31, .-254
+
+        bne x2, x31, .+0
+        bne x2, x31, .+2
+        bne x2, x31, .-2
+        bne x2, x31, .+4094
+        bne x2, x31, .-4096
+        bne x2, x31, .+254
+        bne x2, x31, .-254
+
+        blt x2, x31, .+0
+        blt x2, x31, .+2
+        blt x2, x31, .-2
+        blt x2, x31, .+4094
+        blt x2, x31, .-4096
+        blt x2, x31, .+254
+        blt x2, x31, .-254
+
+        bge x2, x31, .+0
+        bge x2, x31, .+2
+        bge x2, x31, .-2
+        bge x2, x31, .+4094
+        bge x2, x31, .-4096
+        bge x2, x31, .+254
+        bge x2, x31, .-254
+
+        bltu x2, x31, .+0
+        bltu x2, x31, .+2
+        bltu x2, x31, .-2
+        bltu x2, x31, .+4094
+        bltu x2, x31, .-4096
+        bltu x2, x31, .+254
+        bltu x2, x31, .-254
+
+        bgeu x2, x31, .+0
+        bgeu x2, x31, .+2
+        bgeu x2, x31, .-2
+        bgeu x2, x31, .+4094
+        bgeu x2, x31, .-4096
+        bgeu x2, x31, .+254
+        bgeu x2, x31, .-254
 
         /*
          * Keep last so the testcase can catch errors in

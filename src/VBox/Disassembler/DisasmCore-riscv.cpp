@@ -66,6 +66,8 @@ static FNDISPARSERISCV disRiscVParseLoad;
 static FNDISPARSERISCV disRiscVParseBranch;
 static FNDISPARSERISCV disRiscVParseU;
 static FNDISPARSERISCV disRiscVParseJmp;
+static FNDISPARSERISCV disRiscVParseJal;
+static FNDISPARSERISCV disRiscVParseShamt;
 /** @}  */
 
 
@@ -88,7 +90,9 @@ static PFNDISPARSERISCV const g_apfnDisasm[kDisParmParseMax] =
     disRiscVParseLoad,
     disRiscVParseBranch,
     disRiscVParseU,
-    disRiscVParseJmp
+    disRiscVParseJmp,
+    disRiscVParseJal,
+    disRiscVParseShamt
 };
 
 
@@ -218,11 +222,82 @@ static int disRiscVParseU(PDISSTATE pDis, uint32_t u32Insn, PCDISRISCVOPCODE pOp
 }
 
 
+static int disRiscVParseJal(PDISSTATE pDis, uint32_t u32Insn, PCDISRISCVOPCODE pOp, PCDISRISCVINSNCLASS pInsnClass)
+{
+    RT_NOREF(pOp, pInsnClass);
+    uint8_t  const uGprDest    = disRiscVExtractBitVecFromInsn(u32Insn,  7,  5);
+    uint32_t const fSignBit    = RT_BIT_32(20);
+    uint32_t const u32Imm20    = disRiscVExtractBitVecFromInsn(u32Insn, 31,  1);
+    uint32_t const u32Imm10_1  = disRiscVExtractBitVecFromInsn(u32Insn, 21, 10);
+    uint32_t const u32Imm11    = disRiscVExtractBitVecFromInsn(u32Insn, 20,  1);
+    uint32_t const u32Imm19_12 = disRiscVExtractBitVecFromInsn(u32Insn, 12,  8);
+
+    uint32_t const u32 =   (u32Imm10_1  <<  1)
+                         | (u32Imm11    << 11)
+                         | (u32Imm19_12 << 12)
+                         | (u32Imm20    << 20);
+    int32_t off = ((u32 ^ fSignBit) - fSignBit);
+
+    pDis->aParams[0].riscv.enmType   = kDisRiscVOpParmGpr;
+    pDis->aParams[0].riscv.Op.u8Gpr  = uGprDest;
+
+    pDis->aParams[1].riscv.enmType   = kDisRiscVOpParmImmRel;
+    pDis->aParams[1].riscv.cb        = sizeof(int32_t);
+    pDis->aParams[1].uValue          = (int64_t)off;
+    pDis->aParams[1].fUse            = DISUSE_IMMEDIATE32_REL;
+    return VINF_SUCCESS;
+}
+
+
 static int disRiscVParseJmp(PDISSTATE pDis, uint32_t u32Insn, PCDISRISCVOPCODE pOp, PCDISRISCVINSNCLASS pInsnClass)
 {
-    RT_NOREF(pDis, u32Insn, pOp, pInsnClass);
-    AssertFailed();
-    return VERR_INTERNAL_ERROR;
+    RT_NOREF(pOp, pInsnClass);
+    uint8_t  const uGprSrc1   = disRiscVExtractBitVecFromInsn(u32Insn, 15,  5);
+    uint8_t  const uGprSrc2   = disRiscVExtractBitVecFromInsn(u32Insn, 20,  5);
+    uint32_t const fSignBit   = RT_BIT_32(12);
+    uint32_t const u32Imm12   = disRiscVExtractBitVecFromInsn(u32Insn, 31,  1);
+    uint32_t const u32Imm10_5 = disRiscVExtractBitVecFromInsn(u32Insn, 25,  6);
+    uint32_t const u32Imm4_1  = disRiscVExtractBitVecFromInsn(u32Insn,  8,  4);
+    uint32_t const u32Imm11   = disRiscVExtractBitVecFromInsn(u32Insn,  7,  1);
+
+    uint32_t const u32 =   (u32Imm4_1  << 1)
+                         | (u32Imm10_5 << 5)
+                         | (u32Imm11   << 11)
+                         | (u32Imm12   << 12);
+    int32_t off = ((u32 ^ fSignBit) - fSignBit);
+
+    pDis->aParams[0].riscv.enmType   = kDisRiscVOpParmGpr;
+    pDis->aParams[0].riscv.Op.u8Gpr  = uGprSrc1;
+
+    pDis->aParams[1].riscv.enmType   = kDisRiscVOpParmGpr;
+    pDis->aParams[1].riscv.Op.u8Gpr  = uGprSrc2;
+
+    pDis->aParams[2].riscv.enmType   = kDisRiscVOpParmImmRel;
+    pDis->aParams[2].riscv.cb        = sizeof(int32_t);
+    pDis->aParams[2].uValue          = (int64_t)off;
+    pDis->aParams[2].fUse            = DISUSE_IMMEDIATE32_REL;
+    return VINF_SUCCESS;
+}
+
+
+static int disRiscVParseShamt(PDISSTATE pDis, uint32_t u32Insn, PCDISRISCVOPCODE pOp, PCDISRISCVINSNCLASS pInsnClass)
+{
+    RT_NOREF(pOp, pInsnClass);
+    uint8_t const u8Shamt  = disRiscVExtractBitVecFromInsn(u32Insn, 20, pDis->uCpuMode == DISCPUMODE_RISCV_RV32 ? 5 : 6);
+    uint8_t const uGprDest = disRiscVExtractBitVecFromInsn(u32Insn,  7, 5);
+    uint8_t const uGprSrc  = disRiscVExtractBitVecFromInsn(u32Insn, 15, 5);
+
+    pDis->aParams[0].riscv.enmType   = kDisRiscVOpParmGpr;
+    pDis->aParams[0].riscv.Op.u8Gpr  = uGprDest;
+
+    pDis->aParams[1].riscv.enmType   = kDisRiscVOpParmGpr;
+    pDis->aParams[1].riscv.Op.u8Gpr  = uGprSrc;
+
+    pDis->aParams[2].riscv.enmType   = kDisRiscVOpParmImm;
+    pDis->aParams[2].riscv.cb        = sizeof(uint32_t);
+    pDis->aParams[2].uValue          = (int64_t)u8Shamt;
+    pDis->aParams[2].fUse            = DISUSE_IMMEDIATE8;
+    return VINF_SUCCESS;
 }
 
 
@@ -297,14 +372,23 @@ static int disInstrRiscVDecodeWorker(PDISSTATE pDis, uint32_t u32Insn, PCDISRISC
     if (RT_LIKELY(idxNext < pMap->cClasses))
     {
         PCDISRISCVINSNCLASS pInsnClass = pMap->papInsnClass[idxNext];
-        uint32_t uOpcRaw = 0;
 
-        if (pInsnClass->cOpcodes > 1)
-            uOpcRaw = (u32Insn & pInsnClass->fMask) >> pInsnClass->cShift;
-        if (uOpcRaw < pInsnClass->cOpcodes)
+        for (;;)
         {
-            PCDISRISCVOPCODE pOp = &pInsnClass->paOpcodes[uOpcRaw];
-            return disRiscVParseInstruction(pDis, u32Insn, pOp, pInsnClass);
+            uint32_t uOpcRaw = 0;
+
+            if (pInsnClass->cOpcodes > 1)
+                uOpcRaw = (u32Insn & pInsnClass->fMask) >> pInsnClass->cShift;
+            if (uOpcRaw < pInsnClass->cOpcodes)
+            {
+                PCDISRISCVOPCORMAP pOp = &pInsnClass->paOpcodes[uOpcRaw];
+                if (pOp->fOpCode)
+                    return disRiscVParseInstruction(pDis, u32Insn, &pOp->Op, pInsnClass);
+
+                pInsnClass = pOp->pInsnClass;
+            }
+            else
+                break;
         }
     }
 

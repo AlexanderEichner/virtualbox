@@ -76,16 +76,29 @@ DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(MiscMem)
 DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(MiscMem, 0 /*fFixedInsn*/, kDisParmParseLoad,
                                        0, 0);
 
+DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(Slli)
+    DIS_RISCV_OP(0xba000400, "slli",    OP_RISCV_SLLI),
+DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(Slli, 0 /*fFixedInsn*/, kDisParmParseShamt,
+                                         RT_BIT_32(31) | RT_BIT_32(30) | RT_BIT_32(29) | RT_BIT_32(28)
+                                       | RT_BIT_32(27) | RT_BIT_32(26) | RT_BIT_32(25), 25);
+
+
+DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(SrliSrai)
+    DIS_RISCV_OP(0xba000400, "srli",    OP_RISCV_SRLI),
+    DIS_RISCV_OP(0xba000400, "srai",    OP_RISCV_SRAI)
+DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(SrliSrai, 0 /*fFixedInsn*/, kDisParmParseShamt,
+                                       RT_BIT_32(30), 30); /* Only using bit 30 here instead of full funct7 to avoid blowing up the table unneccessarily. */
+
 
 DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(OpImm)
-    DIS_RISCV_OP(0xba000400, "addi",    OP_RISCV_ADDI),
-    DIS_RISCV_OP(0xba000400, "slli",    OP_RISCV_SLLI),
-    DIS_RISCV_OP(0xba000400, "slti",    OP_RISCV_SLTI),
-    DIS_RISCV_OP(0xba000400, "sltiu",   OP_RISCV_SLTIU),
-    DIS_RISCV_OP(0xba000400, "xori",    OP_RISCV_XORI),
-    DIS_RISCV_OP(0xba000400, "srli",    OP_RISCV_SRLI),
-    DIS_RISCV_OP(0xba000400, "ori",     OP_RISCV_ORI),
-    DIS_RISCV_OP(0xba000400, "andi",    OP_RISCV_ANDI),
+    DIS_RISCV_OP(       0xba000400, "addi",    OP_RISCV_ADDI),
+    DIS_RISCV_INSNCLASS(Slli),
+    DIS_RISCV_OP(       0xba000400, "slti",    OP_RISCV_SLTI),
+    DIS_RISCV_OP(       0xba000400, "sltiu",   OP_RISCV_SLTIU),
+    DIS_RISCV_OP(       0xba000400, "xori",    OP_RISCV_XORI),
+    DIS_RISCV_INSNCLASS(SrliSrai),
+    DIS_RISCV_OP(       0xba000400, "ori",     OP_RISCV_ORI),
+    DIS_RISCV_OP(       0xba000400, "andi",    OP_RISCV_ANDI),
 DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(OpImm, 0 /*fFixedInsn*/, kDisParmParseImm,
                                        RT_BIT_32(14) | RT_BIT_32(13) | RT_BIT_32(12), 12);
 
@@ -178,9 +191,16 @@ DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(OpV, 0 /*fFixedInsn*/, kDisParmParseLoad,
 
 
 DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(Branch)
+    DIS_RISCV_OP(0, "beq",            OP_RISCV_BEQ),
+    DIS_RISCV_OP(0, "bne",            OP_RISCV_BNE),
     INVALID_OPCODE,
-DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(Branch, 0 /*fFixedInsn*/, kDisParmParseLoad,
-                                       0, 0);
+    INVALID_OPCODE,
+    DIS_RISCV_OP(0, "blt",            OP_RISCV_BLT),
+    DIS_RISCV_OP(0, "bge",            OP_RISCV_BGE),
+    DIS_RISCV_OP(0, "bltu",           OP_RISCV_BLTU),
+    DIS_RISCV_OP(0, "bgeu",           OP_RISCV_BGEU),
+DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(Branch, 0 /*fFixedInsn*/, kDisParmParseJmp,
+                                       RT_BIT_32(14) | RT_BIT_32(13) | RT_BIT_32(12), 12);
 
 
 DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(Jalr)
@@ -191,7 +211,7 @@ DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(Jalr, 0 /*fFixedInsn*/, kDisParmParseLoad
 
 DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(Jal)
     DIS_RISCV_OP(0xba000400, "jal",            OP_RISCV_JAL),
-DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(Jal, 0 /*fFixedInsn*/, kDisParmParseJmp,
+DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(Jal, 0 /*fFixedInsn*/, kDisParmParseJal,
                                        0, 0);
 
 

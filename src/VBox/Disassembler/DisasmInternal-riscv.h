@@ -57,9 +57,15 @@ typedef enum DISPARMPARSEIDX
     kDisParmParseBranch,
     kDisParmParseU,
     kDisParmParseJmp,
+    kDisParmParseJal,
+    kDisParmParseShamt,
     kDisParmParseMax
 } DISPARMPARSEIDX;
 /** @}  */
+
+
+/** Pointer to a constant instruction class descriptor. */
+typedef const struct DISRISCVINSNCLASS *PCDISRISCVINSNCLASS;
 
 
 /**
@@ -68,20 +74,34 @@ typedef enum DISPARMPARSEIDX
 typedef struct DISRISCVOPCODE
 {
     /** The value of the fixed bits of the instruction. */
-    uint32_t            fValue;
+    uint32_t        fValue;
     /** The generic opcode structure. */
-    DISOPCODE           Opc;
+    DISOPCODE       Opc;
 } DISRISCVOPCODE;
 /** Pointer to a const opcode. */
 typedef const DISRISCVOPCODE *PCDISRISCVOPCODE;
 
 
+typedef struct DISRISCVOPCORMAP
+{
+    union
+    {
+        DISRISCVOPCODE      Op;
+        PCDISRISCVINSNCLASS pInsnClass;
+    };
+    bool                    fOpCode;
+} DISRISCVOPCORMAP;
+typedef const DISRISCVOPCORMAP *PCDISRISCVOPCORMAP;
+
 #define DIS_RISCV_OP(a_fValue, a_szOpcode, a_uOpcode) \
-    { a_fValue, OP(a_szOpcode, 0, 0, 0, a_uOpcode, 0, 0, 0, DISOPTYPE_HARMLESS) }
+    { { a_fValue, OP(a_szOpcode, 0, 0, 0, a_uOpcode, 0, 0, 0, DISOPTYPE_HARMLESS) }, true }
 #define DIS_RISCV_OP_F(a_fValue, a_szOpcode, a_uOpcode, a_fOpType) \
-    { a_fValue, OP(a_szOpcode, 0, 0, 0, a_uOpcode, 0, 0, 0, a_fOpType) }
+    { { a_fValue, OP(a_szOpcode, 0, 0, 0, a_uOpcode, 0, 0, 0, DISOPTYPE_HARMLESS) }, true }
 #define DIS_RISCV_OP_EX(a_fValue, a_szOpcode, a_uOpcode, a_fOpType) \
-    { a_fValue, OP(a_szOpcode, 0, 0, 0, a_uOpcode, 0, 0, 0, a_fOpType) }
+    { { a_fValue, OP(a_szOpcode, 0, 0, 0, a_uOpcode, 0, 0, 0, DISOPTYPE_HARMLESS) }, true }
+
+#define DIS_RISCV_INSNCLASS(a_InsnClassName) \
+    { .pInsnClass = & g_aRiscVInsn ## a_InsnClassName, .fOpCode = false }
 
 
 /**
@@ -90,7 +110,7 @@ typedef const DISRISCVOPCODE *PCDISRISCVOPCODE;
 typedef struct DISRISCVINSNCLASS
 {
     /** Pointer to the array of opcodes. */
-    PCDISRISCVOPCODE        paOpcodes;
+    PCDISRISCVOPCORMAP       paOpcodes;
     /** Number of opcodes in the opcode table. */
     uint32_t                cOpcodes;
     /** The mask of fixed instruction bits. */
@@ -102,12 +122,10 @@ typedef struct DISRISCVINSNCLASS
     /** Number of bits to shift to get an index. */
     uint32_t                cShift;
 } DISRISCVINSNCLASS;
-/** Pointer to a constant instruction class descriptor. */
-typedef const DISRISCVINSNCLASS *PCDISRISCVINSNCLASS;
 
 
 #define DIS_RISCV_DECODE_INSN_CLASS_DEFINE_BEGIN(a_Name) \
-    static const DISRISCVOPCODE g_aRiscVInsn ## a_Name ## Opcodes[] = {
+    static const DISRISCVOPCORMAP g_aRiscVInsn ## a_Name ## Opcodes[] = {
 #define DIS_RISCV_DECODE_INSN_CLASS_DEFINE_END(a_Name, a_fFixedInsn, a_enmOpcDecode, a_fMask, a_cShift) \
     }; \
     static const DISRISCVINSNCLASS g_aRiscVInsn ## a_Name = \
