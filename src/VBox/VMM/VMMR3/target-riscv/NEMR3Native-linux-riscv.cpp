@@ -330,6 +330,36 @@ DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
 *   CPU State                                                                                                                    *
 *********************************************************************************************************************************/
 
+#ifdef LOG_ENABLED
+/**
+ * Logs the current CPU state.
+ */
+static void nemR3LnxLogState(PVMCC pVM, PVMCPUCC pVCpu)
+{
+    if (LogIs3Enabled())
+    {
+        char szRegs[4096];
+        DBGFR3RegPrintf(pVM->pUVM, pVCpu->idCpu, &szRegs[0], sizeof(szRegs),
+                        "x0=%016VR{x0} x1=%016VR{x1} x2=%016VR{x2} x3=%016VR{x3}\n"
+                        "x4=%016VR{x4} x5=%016VR{x5} x6=%016VR{x6} x7=%016VR{x7}\n"
+                        "x8=%016VR{x8} x9=%016VR{x9} x10=%016VR{x10} x11=%016VR{x11}\n"
+                        "x12=%016VR{x12} x13=%016VR{x13} x14=%016VR{x14} x15=%016VR{x15}\n"
+                        "x16=%016VR{x16} x17=%016VR{x17} x18=%016VR{x18} x19=%016VR{x19}\n"
+                        "x20=%016VR{x20} x21=%016VR{x21} x22=%016VR{x22} x23=%016VR{x23}\n"
+                        "x24=%016VR{x24} x25=%016VR{x25} x26=%016VR{x26} x27=%016VR{x27}\n"
+                        "x28=%016VR{x28} x29=%016VR{x29} x30=%016VR{x30} x30=%016VR{x31}\n"
+                        "pc=%016VR{pc}\n"
+                        );
+        char szInstr[256]; RT_ZERO(szInstr);
+        DBGFR3DisasInstrEx(pVM->pUVM, pVCpu->idCpu, 0, 0,
+                           DBGF_DISAS_FLAGS_CURRENT_GUEST | DBGF_DISAS_FLAGS_DEFAULT_MODE,
+                           szInstr, sizeof(szInstr), NULL);
+        Log3(("%s%s\n", szRegs, szInstr));
+    }
+}
+#endif /* LOG_ENABLED */
+
+
 /**
  * Sets the given general purpose register to the given value.
  *
@@ -387,7 +417,7 @@ DECLINLINE(uint64_t) nemR3LnxGetGReg(PVMCPU pVCpu, uint8_t uReg)
         return 0;
 
     /** @todo Import the register if extern. */
-    //AssertRelease(!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_GPRS_MASK));
+    AssertRelease(!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_GPRS_MASK));
 
     return pVCpu->cpum.GstCtx.aGRegs[uReg].x;
 }
@@ -401,16 +431,7 @@ static int nemHCLnxImportState(PVMCPUCC pVCpu, uint64_t fWhat, PCPUMCTX pCtx)
     if (!fWhat)
         return VINF_SUCCESS;
 
-    RT_NOREF(pCtx);
-#if 0
-    hv_return_t hrc = hv_vcpu_get_sys_reg(pVCpu->nem.s.hVCpu, HV_SYS_REG_CNTV_CTL_EL0, &pVCpu->cpum.GstCtx.CntvCtlEl0);
-    if (hrc == HV_SUCCESS)
-        hrc = hv_vcpu_get_sys_reg(pVCpu->nem.s.hVCpu, HV_SYS_REG_CNTV_CVAL_EL0, &pVCpu->cpum.GstCtx.CntvCValEl0);
-#endif
-
     /** @todo Fix bogus rc handling (overwritten/ignored). Optimize. */
-#if 0
-
     int rc = VINF_SUCCESS;
     if (fWhat & (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_PC))
     {
@@ -431,7 +452,6 @@ static int nemHCLnxImportState(PVMCPUCC pVCpu, uint64_t fWhat, PCPUMCTX pCtx)
     pVCpu->cpum.GstCtx.fExtrn &= ~fWhat;
     if (!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_ALL))
         pVCpu->cpum.GstCtx.fExtrn = 0;
-#endif
 
     return VINF_SUCCESS;
 }
@@ -462,7 +482,6 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
 
     RT_NOREF(pVM);
 
-#if 0
     /** @todo optimize all of this! */
 
     if (   (pVCpu->cpum.GstCtx.fExtrn & (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_PC))
@@ -482,7 +501,6 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
      * KVM now owns all the state.
      */
     pCtx->fExtrn = CPUMCTX_EXTRN_KEEPER_NEM | CPUMCTX_EXTRN_ALL;
-#endif
     RT_NOREF(pVCpu, pCtx);
     return rc;
 }
@@ -756,6 +774,13 @@ static VBOXSTRICTRC nemHCLnxHandleExitMmio(PVMCC pVM, PVMCPUCC pVCpu, struct kvm
 static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run *pRun, bool *pfStatefulExit)
 {
     STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitTotal);
+
+    nemHCLnxImportState(pVCpu, UINT64_MAX, &pVCpu->cpum.GstCtx);
+
+#ifdef LOG_ENABLED
+    if (LogIs3Enabled())
+        nemR3LnxLogState(pVM, pVCpu);
+#endif
 
     switch (pRun->exit_reason)
     {
