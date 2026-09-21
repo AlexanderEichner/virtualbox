@@ -1518,6 +1518,10 @@ typedef struct DBGFDISSTATE
         /** ARMv8 specific state. */
         DIS_STATE_ARMV8_T   armv8;
 #endif
+#if defined(VBOX_DIS_WITH_RISCV)
+        /** RISC-V specific state. */
+        DIS_STATE_RISCV_T   riscv;
+#endif
     };
 } DBGFDISSTATE;
 /** Pointer to a DBGF disassembler state. */
