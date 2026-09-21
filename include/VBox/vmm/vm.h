@@ -1666,7 +1666,7 @@ typedef struct VM
         union
         {
             /** @todo */
-            uint8_t     padding[128];   /* multiple of 8 */
+            uint8_t     padding[320];   /* multiple of 8 */
         } aplic;
 #endif
     };
