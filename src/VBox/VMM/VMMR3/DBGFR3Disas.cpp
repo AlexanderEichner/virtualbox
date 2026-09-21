@@ -163,8 +163,12 @@ static int dbgfR3DisasInstrFirst(PVM pVM, PVMCPU pVCpu, PDBGFSELINFO pSelInfo, P
             enmCpuMode = DISCPUMODE_ARMV8_A64;
             break;
 #elif defined(VBOX_VMM_TARGET_RISCV)
-        AssertFailed();
-        enmCpuMode = DISCPUMODE_ARMV8_A64; /** @todo */
+        case DBGF_DISAS_FLAGS_32BIT_MODE:
+            enmCpuMode = DISCPUMODE_RISCV_RV32;
+            break;
+        case DBGF_DISAS_FLAGS_64BIT_MODE:
+            enmCpuMode = DISCPUMODE_RISCV_RV64;
+            break;
 #else
 # error "port me"
 #endif
@@ -311,7 +315,6 @@ static DECLCALLBACK(int) dbgfR3DisasInstrRead(PDISSTATE pDis, uint8_t offInstr, 
 }
 
 
-#ifndef VBOX_VMM_TARGET_RISCV
 /**
  * @callback_method_impl{FNDISGETSYMBOL}
  */
@@ -389,7 +392,6 @@ static DECLCALLBACK(int) dbgfR3DisasGetSymbol(PCDISSTATE pDis, uint32_t u32Sel, 
     }
     return rc;
 }
-#endif
 
 
 /**
@@ -585,8 +587,10 @@ dbgfR3DisasInstrExOnVCpu(PVM pVM, PVMCPU pVCpu, RTSEL Sel, PRTGCPTR pGCPtr, uint
                     fFlags & DBGF_DISAS_FLAGS_NO_SYMBOLS ? NULL : dbgfR3DisasGetSymbol,
                     &SelInfo);
 #elif defined(VBOX_VMM_TARGET_RISCV)
-    AssertFailed();
-    /** @todo */
+    DISFormatRiscVEx(&State.Dis, szBuf, sizeof(szBuf),
+                     DIS_FMT_FLAGS_RELATIVE_BRANCH,
+                     fFlags & DBGF_DISAS_FLAGS_NO_SYMBOLS ? NULL : dbgfR3DisasGetSymbol,
+                     NULL);
 #else
 # error "port me"
 #endif
@@ -673,8 +677,7 @@ dbgfR3DisasInstrExOnVCpu(PVM pVM, PVMCPU pVCpu, RTSEL Sel, PRTGCPTR pGCPtr, uint
 #elif defined(VBOX_VMM_TARGET_X86)
         memcpy(&pDisState->x86, &State.Dis.x86, sizeof(State.Dis.x86));
 #elif defined(VBOX_VMM_TARGET_RISCV)
-        AssertFailed();
-        /** @todo */
+        memcpy(&pDisState->riscv, &State.Dis.riscv, sizeof(State.Dis.riscv));
 #else
 # error "port me"
 #endif
