@@ -55,6 +55,9 @@ __asm__(".symver posix_spawn,posix_spawn@GLIBC_2.2.5");
 #elif defined(RT_ARCH_ARM64)
 __asm__(".symver memcpy,memcpy@GLIBC_2.17");
 __asm__(".symver posix_spawn,posix_spawn@GLIBC_2.17");
+#elif defined(RT_ARCH_RISCV64)
+__asm__(".symver memcpy,memcpy@GLIBC_2.27");
+__asm__(".symver posix_spawn,posix_spawn@GLIBC_2.27");
 #else  /* RT_ARCH_X86 */
 __asm__(".symver posix_spawn,posix_spawn@GLIBC_2.2");
 #endif
@@ -84,6 +87,8 @@ __asm__(".symver posix_spawn,posix_spawn@GLIBC_2.2");
 __asm__(".symver fcntl64,fcntl@GLIBC_2.2.5");
 #elif defined(RT_ARCH_ARM64)
 __asm__(".symver fcntl64,fcntl@GLIBC_2.17");
+#elif defined(RT_ARCH_RISCV64)
+__asm__(".symver fcntl64,fcntl@GLIBC_2.27");
 #else
 __asm__(".symver fcntl64,fcntl@GLIBC_2.0");
 #endif
