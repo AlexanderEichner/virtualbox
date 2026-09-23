@@ -883,8 +883,8 @@ VMMR3DECL(int) PGMR3Init(PVM pVM)
         }
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
-        /** @todo */
-        RT_NOREF(pVCpu, pPGM);
+        pPGM->u64CsrSatp   = UINT64_MAX;
+        pPGM->enmGuestMode = PGMMODE_INVALID;
 #else
 # error "port me"
 #endif
@@ -1113,7 +1113,10 @@ VMMR3DECL(int) PGMR3Init(PVM pVM)
     {
         PVMCPU pVCpu = pVM->apCpusR3[i];
 
-        /** @todo */ RT_NOREF(pVCpu);
+        /* This ASSUMES that SATP is reset to 0 in CPUM. */
+        rc = PGMChangeMode(pVCpu, 0 /* u64CsrSatp*/);
+        if (RT_FAILURE(rc))
+            break;
     }
 
 #else
@@ -2039,6 +2042,23 @@ VMMR3DECL(void) PGMR3ResetCpu(PVM pVM, PVMCPU pVCpu)
     AssertReleaseRC(rc);
 
     STAM_REL_COUNTER_RESET(&pVCpu->pgm.s.cGuestModeChanges);
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    RT_NOREF(pVM);
+
+    uintptr_t const idxGst = pVCpu->pgm.s.idxGuestModeData;
+    if (   idxGst < RT_ELEMENTS(g_aPgmGuestModeData)
+        && g_aPgmGuestModeData[idxGst].pfnExit)
+    {
+        int rc = g_aPgmGuestModeData[idxGst].pfnExit(pVCpu);
+        AssertReleaseRC(rc);
+    }
+
+    /* This ASSUMES that SCTLR_EL1 and TCR_EL1 are reset to 0 in CPUM. */
+    int rc = PGMChangeMode(pVCpu, 0 /* u64CsrSatp*/);
+    AssertReleaseRC(rc);
+
+    STAM_REL_COUNTER_RESET(&pVCpu->pgm.s.cGuestModeChanges);
 #else
     RT_NOREF(pVM, pVCpu);
 #endif
@@ -2102,6 +2122,15 @@ VMMR3_INT_DECL(void) PGMR3Reset(PVM pVM)
             }
         }
 
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        uintptr_t const idxGst = pVCpu->pgm.s.idxGuestModeData;
+        if (   idxGst < RT_ELEMENTS(g_aPgmGuestModeData)
+            && g_aPgmGuestModeData[idxGst].pfnExit)
+        {
+            int rc = g_aPgmGuestModeData[idxGst].pfnExit(pVCpu);
+            AssertReleaseRC(rc);
+        }
+
 #else
         RT_NOREF(pVCpu);
 #endif
@@ -2134,6 +2163,11 @@ VMMR3_INT_DECL(void) PGMR3Reset(PVM pVM)
         AssertReleaseRC(rc);
 
         rc = PGMChangeMode(pVCpu, 3 /*bEl*/, 0 /* u64RegSctlr*/, 0 /* u64RegTcr*/);
+        AssertReleaseRC(rc);
+
+#elif defined(VBOX_VMM_TARGET_RISCV)
+        /* This ASSUMES that SATP is reset to 0 in CPUM. */
+        int rc = PGMChangeMode(pVCpu, 0 /* u64CsrSatp*/);
         AssertReleaseRC(rc);
 
 #else

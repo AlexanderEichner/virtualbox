@@ -294,7 +294,8 @@ typedef enum PGMMODE
 
     /** ARMv8: Paging is not enabled by the guest.
      * AMD64 host: Special mode used by NEM to indicate no shadow paging
-     * necessary.  Not used by X86 guests. */
+     * necessary.  Not used by X86 guests. 
+     * RISC-V: Paging is not enabled by the guest. */
     PGMMODE_NONE = 32,
 
     /** @name ARMv8
@@ -722,6 +723,15 @@ AssertCompile(PGM_PTATTRS_S2_AO_MASK    == RT_BIT_64(PGM_PTATTRS_S2_AO_SHIFT));
 /** @} */
 #endif /* VBOX_VMM_TARGET_ARMV8 || DOXYGEN_RUNNING */
 
+#if defined(VBOX_VMM_TARGET_RISCV) || defined(DOXYGEN_RUNNING)
+/** @name PGM_PTATTRS_XXX - PGM page-table attributes, RISC-V edition.
+ * @{ */
+
+/** @todo */
+
+/** @} */
+#endif /* VBOX_VMM_TARGET_RISCV || DOXYGEN_RUNNING */
+
 
 
 /**
@@ -957,6 +967,8 @@ VMM_INT_DECL(int)   PGMChangeMode(PVMCPUCC pVCpu, uint64_t cr0, uint64_t cr4, ui
 VMM_INT_DECL(int)   PGMHCChangeMode(PVMCC pVM, PVMCPUCC pVCpu, PGMMODE enmGuestMode, bool fForce);
 #elif defined(VBOX_VMM_TARGET_ARMV8)
 VMM_INT_DECL(int)   PGMChangeMode(PVMCPUCC pVCpu, uint8_t bEl, uint64_t u64RegSctlr, uint64_t u64RegTcr);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+VMM_INT_DECL(int)   PGMChangeMode(PVMCPUCC pVCpu, uint64_t u64CsrSatp);
 #endif
 VMMDECL(void)       PGMCr0WpEnabled(PVMCPUCC pVCpu);
 VMMDECL(PGMMODE)    PGMGetGuestMode(PVMCPU pVCpu);

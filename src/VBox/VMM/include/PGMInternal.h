@@ -3757,6 +3757,13 @@ typedef struct PGMCPU
      * This is used to queue operations for PGMSyncCR3, PGMInvalidatePage,
      * PGMFlushTLB, and PGMR3Load. */
     uint32_t                        fSyncFlags;
+
+    /** The guest paging mode. */
+    PGMMODE                         enmGuestMode;
+    /** The current SATP CSR value. */
+    uint64_t                        u64CsrSatp;
+    /** Guest mode data table index for a page translation (PGM_TYPE_XXX). */
+    uint8_t volatile                idxGuestModeData;
 #endif
 
     /** Count the number of pgm pool access handler calls. */
