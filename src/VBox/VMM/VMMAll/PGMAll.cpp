@@ -765,7 +765,7 @@ AssertCompile(PGMMODE_NONE == 32);
 # include "PGMAllGst-armv8.cpp.h"
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
-    /** @todo */
+# include "PGMAllGst-riscv.cpp.h"
 
 #else
 # error "port me"
@@ -1820,9 +1820,10 @@ VMMDECL(int) PGMGstGetPage(PVMCPUCC pVCpu, RTGCPTR GCPtr, PPGMPTWALK pWalk)
     return g_aPgmGuestModeData[idx].pfnGetPage(pVCpu, GCPtr, pWalk);
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
-    AssertFailed();
-    RT_NOREF(pVCpu, GCPtr, pWalk);
-    return VERR_NOT_IMPLEMENTED;
+    uintptr_t const idx = pVCpu->pgm.s.idxGuestModeData;
+    AssertReturn(idx < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
+    AssertReturn(g_aPgmGuestModeData[idx].pfnGetPage, VERR_PGM_MODE_IPE);
+    return g_aPgmGuestModeData[idx].pfnGetPage(pVCpu, GCPtr, pWalk);
 
 #else
 # error "Port me"
@@ -1863,9 +1864,10 @@ VMM_INT_DECL(int) PGMGstQueryPageFast(PVMCPUCC pVCpu, RTGCPTR GCPtr, uint32_t fF
     return g_aPgmGuestModeData[idx].pfnQueryPageFast(pVCpu, GCPtr, fFlags, pWalk);
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
-    AssertFailed();
-    RT_NOREF(pVCpu, GCPtr, fFlags, pWalk);
-    return VERR_NOT_IMPLEMENTED;
+    uintptr_t const idx = pVCpu->pgm.s.idxGuestModeData;
+    AssertReturn(idx < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
+    AssertReturn(g_aPgmGuestModeData[idx].pfnGetPage, VERR_PGM_MODE_IPE);
+    return g_aPgmGuestModeData[idx].pfnQueryPageFast(pVCpu, GCPtr, fFlags, pWalk);
 
 #else
 # error "Port me"
@@ -1936,9 +1938,10 @@ int pgmGstPtWalk(PVMCPUCC pVCpu, RTGCPTR GCPtr, PPGMPTWALK pWalk, PPGMPTWALKGST 
     return g_aPgmGuestModeData[idx].pfnWalk(pVCpu, GCPtr, pWalk, pGstWalk);
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
-    AssertFailed();
-    RT_NOREF(pVCpu, GCPtr, pWalk, pGstWalk);
-    return VERR_NOT_IMPLEMENTED;
+    uintptr_t const idx =  pVCpu->pgm.s.idxGuestModeData;
+    AssertReturn(idx < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
+    AssertReturn(g_aPgmGuestModeData[idx].pfnGetPage, VERR_PGM_MODE_IPE);
+    return g_aPgmGuestModeData[idx].pfnWalk(pVCpu, GCPtr, pWalk, pGstWalk);
 
 #else
 # error "port me"
@@ -3421,10 +3424,53 @@ VMM_INT_DECL(int) PGMChangeMode(PVMCPUCC pVCpu, uint8_t bEl, uint64_t u64RegSctl
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
 
-VMM_INT_DECL(int) PGMChangeMode(PVMCPUCC pVCpu)
+VMM_INT_DECL(int) PGMChangeMode(PVMCPUCC pVCpu, uint64_t u64CsrSatp)
 {
     VMCPU_ASSERT_EMT_OR_NOT_RUNNING(pVCpu);
-    return VERR_NOT_IMPLEMENTED;
+
+    /* Only go through the setup when something has changed. */
+    int rc;
+    if (u64CsrSatp != pVCpu->pgm.s.u64CsrSatp)
+    {
+        /* guest */
+        uintptr_t const idxOldGst = pVCpu->pgm.s.idxGuestModeData;
+        if (   idxOldGst < RT_ELEMENTS(g_aPgmGuestModeData)
+            && g_aPgmGuestModeData[idxOldGst].pfnExit)
+        {
+            rc = g_aPgmGuestModeData[idxOldGst].pfnExit(pVCpu);
+            AssertMsgReturn(RT_SUCCESS(rc), ("Exit failed for guest mode %d: %Rrc\n", idxOldGst, rc), rc);
+        }
+
+        uintptr_t const idxNewGst = pgmR3DeduceTypeFromSatp(u64CsrSatp);
+        Assert(idxNewGst != 0);
+
+        /*
+         * Change the paging mode data indexes.
+         */
+        AssertReturn(idxNewGst < RT_ELEMENTS(g_aPgmGuestModeData), VERR_PGM_MODE_IPE);
+        AssertReturn(g_aPgmGuestModeData[idxNewGst].uType == idxNewGst, VERR_PGM_MODE_IPE);
+        AssertPtrReturn(g_aPgmGuestModeData[idxNewGst].pfnGetPage, VERR_PGM_MODE_IPE);
+        AssertPtrReturn(g_aPgmGuestModeData[idxNewGst].pfnModifyPage, VERR_PGM_MODE_IPE);
+        AssertPtrReturn(g_aPgmGuestModeData[idxNewGst].pfnExit, VERR_PGM_MODE_IPE);
+        AssertPtrReturn(g_aPgmGuestModeData[idxNewGst].pfnEnter, VERR_PGM_MODE_IPE);
+
+        rc  = g_aPgmGuestModeData[idxNewGst].pfnEnter(pVCpu);
+
+        /* status codes. */
+        AssertRC(rc);
+        if (RT_SUCCESS(rc)) /* no informational status codes. */
+            rc = VINF_SUCCESS;
+
+        pVCpu->pgm.s.idxGuestModeData = idxNewGst;
+        pVCpu->pgm.s.enmGuestMode     = PGMMODE_NONE; /** @todo */
+
+        /* Cache values. */
+        pVCpu->pgm.s.u64CsrSatp = u64CsrSatp;
+    }
+    else
+        rc = VINF_SUCCESS;
+
+    return rc;
 }
 
 #else
@@ -3736,8 +3782,8 @@ VMMDECL(PGMMODE) PGMGetGuestMode(PVMCPU pVCpu)
     return enmMode;
 
 #elif defined(VBOX_VMM_TARGET_RISCV)
-    AssertFailed(); RT_NOREF(pVCpu);
-    return PGMMODE_NONE;
+    RT_NOREF(pVCpu);
+    return pVCpu->pgm.s.enmGuestMode;
 
 #else
 # error "Port me"
