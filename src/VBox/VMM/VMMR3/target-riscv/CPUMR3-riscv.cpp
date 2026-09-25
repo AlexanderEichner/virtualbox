@@ -156,9 +156,9 @@ DECLHIDDEN(int) cpumR3InitTarget(PVM pVM)
     int rc = CFGMR3QueryU64Def(pCpumCfg, "ResetPcValue", &pVM->cpum.s.u64ResetPc, 0);
     AssertLogRelRCReturn(rc, rc);
 
-    /** @cfgm{/CPUM/ResetX1Value, string}
-     * X1 register value after a reset, sets the address of the first instruction to execute. */
-    rc = CFGMR3QueryU64Def(pCpumCfg, "ResetX1Value", &pVM->cpum.s.u64ResetX1, 0);
+    /** @cfgm{/CPUM/ResetA1Value, string}
+     * A1 register value after a reset, sets the address of the first instruction to execute. */
+    rc = CFGMR3QueryU64Def(pCpumCfg, "ResetA1Value", &pVM->cpum.s.u64ResetA1, 0);
     AssertLogRelRCReturn(rc, rc);
 
     /*
@@ -216,7 +216,7 @@ VMMR3DECL(void) CPUMR3ResetCpu(PVM pVM, PVMCPU pVCpu)
     /* Start in Supervisor mode. */
     pCtx->Pc.u64                 = pVM->cpum.s.u64ResetPc;
     pCtx->aGRegs[RISCV_REG_X0].x = pVCpu->idCpu;
-    pCtx->aGRegs[RISCV_REG_X1].x = pVM->cpum.s.u64ResetX1;
+    pCtx->aGRegs[RISCV_REG_A1].x = pVM->cpum.s.u64ResetA1;
     /** @todo */
 }
 
