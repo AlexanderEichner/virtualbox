@@ -34,7 +34,7 @@
  */
 
 #ifndef IPRT_INCLUDED_asm_riscv_h
-#define IPRT_INCLUDED_asm_rsicv_h
+#define IPRT_INCLUDED_asm_riscv_h
 #ifndef RT_WITHOUT_PRAGMA_ONCE
 # pragma once
 #endif
