@@ -1868,10 +1868,9 @@ static int dbgfR3BpArm(PUVM pUVM, DBGFBP hBp, PDBGFBPINT pBp)
             rc = PGMPhysSimpleReadGCPhys(pVM, &pBp->Pub.u.Sw.Arch.x86.bOrg, pBp->Pub.u.Sw.PhysAddr,
                                          sizeof(pBp->Pub.u.Sw.Arch.x86.bOrg));
 #elif defined(VBOX_VMM_TARGET_RISCV)
-            static const uint32_t s_BreakpointInstr = 0xfffffff;
-            AssertFailed();
-            /** @todo */
-            rc = VINF_SUCCESS;
+            static const uint32_t s_BreakpointInstr = 0x00100073;
+            rc = PGMPhysSimpleReadGCPhys(pVM, &pBp->Pub.u.Sw.Arch.riscv.u32Org, pBp->Pub.u.Sw.PhysAddr,
+                                         sizeof(pBp->Pub.u.Sw.Arch.riscv.u32Org));
 #else
 # error "port me"
 #endif
