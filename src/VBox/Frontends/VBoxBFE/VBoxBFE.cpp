@@ -77,8 +77,6 @@
         RTPrintf("%s\n", m); \
     } while (0)
 
-#define DTB_ADDR 0x40000000
-
 
 /*********************************************************************************************************************************
 *   Structures and Typedefs                                                                                                      *
@@ -108,6 +106,7 @@ static uint8_t gaModifiersState[256];
 
 /** flag whether frontend should terminate */
 static volatile bool    g_fTerminateFE      = false;
+static volatile bool    g_fPaused           = false;
 static RTLDRMOD         g_hModVMM           = NIL_RTLDRMOD;
 static PCVMMR3VTABLE    g_pVMM              = NULL;
 static PVM              g_pVM               = NULL;
@@ -412,20 +411,30 @@ static int HandleHostKey(const SDL_KeyboardEvent *pEv)
             gpDisplay->InvalidateAndUpdate();
             break;
         }
+#endif
 
         /*
          * Pause / Resume toggle.
          */
         case SDLK_p:
         {
+#if 0
             if (strchr(gHostKeyDisabledCombinations, 'p'))
                 return VERR_NOT_SUPPORTED;
+#endif
 
-            /** @todo */
+            if (g_fPaused)
+            {
+                g_fPaused = false;
+                g_pVMM->pfnVMR3PowerOn(g_pUVM);
+            }
+            else
+                g_pVMM->pfnVMR3Resume(g_pUVM, VMRESUMEREASON_USER);
             UpdateTitlebar(TITLEBAR_NORMAL);
             break;
         }
 
+#if 0
         /*
          * Reset the VM
          */
@@ -1044,11 +1053,14 @@ DECLCALLBACK(int) vboxbfeVMPowerUpThread(RTTHREAD hThread, void *pvUser)
         }
         else
 #endif
+        if (!g_fPaused)
         {
             rc = g_pVMM->pfnVMR3PowerOn(g_pUVM);
             if (RT_FAILURE(rc))
                 AssertMsgFailed(("VMR3PowerOn failed, rc=%Rrc\n", rc));
         }
+        else
+            g_enmVmState = VMSTATE_CREATED;
     }
 
     /*
@@ -1085,7 +1097,6 @@ static void show_usage()
 extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char **envp)
 {
     RT_NOREF(envp);
-    unsigned fPaused = 0;
 
     LogFlow(("VBoxBFE STARTED.\n"));
     RTPrintf(VBOX_PRODUCT " Basic Interface " VBOX_VERSION_STRING "\n"
@@ -1118,7 +1129,7 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char **envp)
         switch(ch)
         {
             case 'p':
-                fPaused = true;
+                g_fPaused = true;
                 break;
             case 'm':
                 g_u32MemorySizeMB = ValueUnion.u32;
