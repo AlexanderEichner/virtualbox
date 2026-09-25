@@ -943,6 +943,12 @@ typedef struct DBGFBPPUB
                     /** The byte value we replaced by the INT 3 instruction. */
                     uint8_t         bOrg;
                 } x86;
+                /** EBREAK data. */
+                struct
+                {
+                    /** The original instruction being replaced by the breakpoint. */
+                    uint32_t        u32Org;
+                } riscv;
             } Arch;
         } Sw;
 
