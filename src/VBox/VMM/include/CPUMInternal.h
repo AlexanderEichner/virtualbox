@@ -500,8 +500,8 @@ typedef struct CPUM
 
     /** The reset value of the program counter. */
     uint64_t                u64ResetPc;
-    /** The reset value of the X1 register (usually FDT). */
-    uint64_t                u64ResetX1;
+    /** The reset value of the A1 register (usually FDT). */
+    uint64_t                u64ResetA1;
 
     /** Guest CPU info. */
     CPUMINFO                GuestInfo;

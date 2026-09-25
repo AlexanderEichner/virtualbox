@@ -159,33 +159,14 @@ AssertCompileSizeAlignment(CPUMCTX, 8);
 
 /** The PC register value is kept externally. */
 #define CPUMCTX_EXTRN_PC                        UINT64_C(0x0000000000000004)
-/** The SPSR register values are kept externally. */
-#define CPUMCTX_EXTRN_SPSR                      UINT64_C(0x0000000000000008)
-/** The ELR register values are kept externally. */
-#define CPUMCTX_EXTRN_ELR                       UINT64_C(0x0000000000000010)
-/** The SP register values are kept externally. */
-#define CPUMCTX_EXTRN_SP                        UINT64_C(0x0000000000000020)
-/** The PSTATE value is kept externally. */
-#define CPUMCTX_EXTRN_PSTATE                    UINT64_C(0x0000000000000040)
-/** The SCTRL_EL1/TCR_EL1/TTBR{0,1}_EL1 system registers are kept externally. */
-#define CPUMCTX_EXTRN_SCTLR_TCR_TTBR            UINT64_C(0x0000000000000080)
-
-/** The X0 register value is kept externally. */
-#define CPUMCTX_EXTRN_X0                        UINT64_C(0x0000000000000100)
-/** The X1 register value is kept externally. */
-#define CPUMCTX_EXTRN_X1                        UINT64_C(0x0000000000000200)
-/** The X2 register value is kept externally. */
-#define CPUMCTX_EXTRN_X2                        UINT64_C(0x0000000000000400)
-/** The X3 register value is kept externally. */
-#define CPUMCTX_EXTRN_X3                        UINT64_C(0x0000000000000800)
-/** The LR (X30) register value is kept externally. */
-#define CPUMCTX_EXTRN_LR                        UINT64_C(0x0000000000001000)
-/** The FP (X29) register value is kept externally. */
-#define CPUMCTX_EXTRN_FP                        UINT64_C(0x0000000000002000)
-/** The X4 through X28 register values are kept externally. */
-#define CPUMCTX_EXTRN_X4_X28                    UINT64_C(0x0000000000004000)
+/** The RA register is kept externally. */
+#define CPUMCTX_EXTRN_RA                        UINT64_C(0x0000000000000008)
+/** The SP register is kept externally. */
+#define CPUMCTX_EXTRN_SP                        UINT64_C(0x0000000000000010)
+/** The X3 through X31 register values are kept externally. */
+#define CPUMCTX_EXTRN_X3_X31                    UINT64_C(0x0000000000000020)
 /** General purpose registers mask. */
-#define CPUMCTX_EXTRN_GPRS_MASK                 UINT64_C(0x0000000000007f00)
+#define CPUMCTX_EXTRN_GPRS_MASK                 UINT64_C(0x000000000000003c)
 
 /** Mask of bits the keepers can use for state tracking. */
 #define CPUMCTX_EXTRN_KEEPER_STATE_MASK         UINT64_C(0xffff000000000000)
