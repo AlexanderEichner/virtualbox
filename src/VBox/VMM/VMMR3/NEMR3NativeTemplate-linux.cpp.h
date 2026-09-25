@@ -530,7 +530,11 @@ static int nemR3LnxInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
         CAP_ENTRY__L(KVM_CAP_DESTROY_MEMORY_REGION_WORKS),   /* 21 */
         CAP_ENTRY__L(KVM_CAP_USER_NMI),
 #ifdef __KVM_HAVE_GUEST_DEBUG
+# ifdef RT_ARCH_RISCV64
+        CAP_ENTRY__S(KVM_CAP_SET_GUEST_DEBUG, fSetGstDbg),
+# else
         CAP_ENTRY__L(KVM_CAP_SET_GUEST_DEBUG),
+# endif
 #endif
 #ifdef __KVM_HAVE_PIT
         CAP_ENTRY__L(KVM_CAP_REINJECT_CONTROL),

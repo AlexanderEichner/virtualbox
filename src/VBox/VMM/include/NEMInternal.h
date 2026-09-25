@@ -229,13 +229,18 @@ typedef struct NEM
 # ifdef RT_ARCH_ARM64
     /** KVM_CAP_ARM_VM_IPA_SIZE. */
     uint32_t                    cIpaBits;
-# else
+# elif defined(RT_ARCH_X86)
     /** KVM_CAP_X86_ROBUST_SINGLESTEP. */
     bool                        fRobustSingleStep;
     /** KVM_CAP_SPLIT_IRQCHIP */
     bool                        fKvmApic;
     /** KVM_CAP_XCRS */
     bool                        fXcrs;
+#elif defined(RT_ARCH_RISCV64)
+    /** KVM_CAP_SET_GUEST_DEBUG */
+    bool                        fSetGstDbg;
+    /** Flag whether guest debugging is enabled. */
+    bool                        fGstDbg;
 # endif
     /** Size of the nested virt state, 0 if not supported. */
     uint32_t                    cbNestedState;

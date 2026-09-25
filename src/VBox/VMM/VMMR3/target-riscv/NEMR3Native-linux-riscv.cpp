@@ -79,43 +79,41 @@ static const struct
     uint32_t    offCpumCtx;
 } s_aCpumRegs[] =
 {
-#define CPUM_GREG_EMIT_X0_X3(a_Idx)  { KVM_RISCV64_REG_GPR(a_Idx), CPUMCTX_EXTRN_X ## a_Idx, RT_UOFFSETOF(CPUMCTX, aGRegs[a_Idx].x) }
-#define CPUM_GREG_EMIT_X4_X28(a_Idx) { KVM_RISCV64_REG_GPR(a_Idx), CPUMCTX_EXTRN_X4_X28,     RT_UOFFSETOF(CPUMCTX, aGRegs[a_Idx].x) }
-    //CPUM_GREG_EMIT_X0_X3(0),
-    CPUM_GREG_EMIT_X0_X3(1),
-    CPUM_GREG_EMIT_X0_X3(2),
-    CPUM_GREG_EMIT_X0_X3(3),
-    CPUM_GREG_EMIT_X4_X28(4),
-    CPUM_GREG_EMIT_X4_X28(5),
-    CPUM_GREG_EMIT_X4_X28(6),
-    CPUM_GREG_EMIT_X4_X28(7),
-    CPUM_GREG_EMIT_X4_X28(8),
-    CPUM_GREG_EMIT_X4_X28(9),
-    CPUM_GREG_EMIT_X4_X28(10),
-    CPUM_GREG_EMIT_X4_X28(11),
-    CPUM_GREG_EMIT_X4_X28(12),
-    CPUM_GREG_EMIT_X4_X28(13),
-    CPUM_GREG_EMIT_X4_X28(14),
-    CPUM_GREG_EMIT_X4_X28(15),
-    CPUM_GREG_EMIT_X4_X28(16),
-    CPUM_GREG_EMIT_X4_X28(17),
-    CPUM_GREG_EMIT_X4_X28(18),
-    CPUM_GREG_EMIT_X4_X28(19),
-    CPUM_GREG_EMIT_X4_X28(20),
-    CPUM_GREG_EMIT_X4_X28(21),
-    CPUM_GREG_EMIT_X4_X28(22),
-    CPUM_GREG_EMIT_X4_X28(23),
-    CPUM_GREG_EMIT_X4_X28(24),
-    CPUM_GREG_EMIT_X4_X28(25),
-    CPUM_GREG_EMIT_X4_X28(26),
-    CPUM_GREG_EMIT_X4_X28(27),
-    CPUM_GREG_EMIT_X4_X28(28),
-    { KVM_RISCV64_REG_GPR(29), CPUMCTX_EXTRN_FP,   RT_UOFFSETOF(CPUMCTX, aGRegs[29].x) },
-    { KVM_RISCV64_REG_GPR(30), CPUMCTX_EXTRN_LR,   RT_UOFFSETOF(CPUMCTX, aGRegs[30].x) },
-    { KVM_RISCV64_REG_GPR(31), CPUMCTX_EXTRN_LR,   RT_UOFFSETOF(CPUMCTX, aGRegs[31].x) },
+#define CPUM_GREG_EMIT_X3_X31(a_Idx) { KVM_RISCV64_REG_GPR(a_Idx), CPUMCTX_EXTRN_X3_X31,     RT_UOFFSETOF(CPUMCTX, aGRegs[a_Idx].x) }
+    { KVM_RISCV64_REG_RA,      CPUMCTX_EXTRN_RA,   RT_UOFFSETOF(CPUMCTX, aGRegs[1].x)       },
+    { KVM_RISCV64_REG_SP,      CPUMCTX_EXTRN_SP,   RT_UOFFSETOF(CPUMCTX, aGRegs[2].x)       },
+    CPUM_GREG_EMIT_X3_X31(2),
+    CPUM_GREG_EMIT_X3_X31(3),
+    CPUM_GREG_EMIT_X3_X31(4),
+    CPUM_GREG_EMIT_X3_X31(5),
+    CPUM_GREG_EMIT_X3_X31(6),
+    CPUM_GREG_EMIT_X3_X31(7),
+    CPUM_GREG_EMIT_X3_X31(8),
+    CPUM_GREG_EMIT_X3_X31(9),
+    CPUM_GREG_EMIT_X3_X31(10),
+    CPUM_GREG_EMIT_X3_X31(11),
+    CPUM_GREG_EMIT_X3_X31(12),
+    CPUM_GREG_EMIT_X3_X31(13),
+    CPUM_GREG_EMIT_X3_X31(14),
+    CPUM_GREG_EMIT_X3_X31(15),
+    CPUM_GREG_EMIT_X3_X31(16),
+    CPUM_GREG_EMIT_X3_X31(17),
+    CPUM_GREG_EMIT_X3_X31(18),
+    CPUM_GREG_EMIT_X3_X31(19),
+    CPUM_GREG_EMIT_X3_X31(20),
+    CPUM_GREG_EMIT_X3_X31(21),
+    CPUM_GREG_EMIT_X3_X31(22),
+    CPUM_GREG_EMIT_X3_X31(23),
+    CPUM_GREG_EMIT_X3_X31(24),
+    CPUM_GREG_EMIT_X3_X31(25),
+    CPUM_GREG_EMIT_X3_X31(26),
+    CPUM_GREG_EMIT_X3_X31(27),
+    CPUM_GREG_EMIT_X3_X31(28),
+    CPUM_GREG_EMIT_X3_X31(29),
+    CPUM_GREG_EMIT_X3_X31(30),
+    CPUM_GREG_EMIT_X3_X31(31),
     { KVM_RISCV64_REG_PC,      CPUMCTX_EXTRN_PC,   RT_UOFFSETOF(CPUMCTX, Pc.u64)       },
-#undef CPUM_GREG_EMIT_X0_X3
-#undef CPUM_GREG_EMIT_X4_X28
+#undef CPUM_GREG_EMIT_X3_X31
 };
 
 
@@ -340,14 +338,14 @@ static void nemR3LnxLogState(PVMCC pVM, PVMCPUCC pVCpu)
     {
         char szRegs[4096];
         DBGFR3RegPrintf(pVM->pUVM, pVCpu->idCpu, &szRegs[0], sizeof(szRegs),
-                        "x0=%016VR{x0} x1=%016VR{x1} x2=%016VR{x2} x3=%016VR{x3}\n"
+                        "              x1=%016VR{x1} x2=%016VR{x2} x3=%016VR{x3}\n"
                         "x4=%016VR{x4} x5=%016VR{x5} x6=%016VR{x6} x7=%016VR{x7}\n"
                         "x8=%016VR{x8} x9=%016VR{x9} x10=%016VR{x10} x11=%016VR{x11}\n"
                         "x12=%016VR{x12} x13=%016VR{x13} x14=%016VR{x14} x15=%016VR{x15}\n"
                         "x16=%016VR{x16} x17=%016VR{x17} x18=%016VR{x18} x19=%016VR{x19}\n"
                         "x20=%016VR{x20} x21=%016VR{x21} x22=%016VR{x22} x23=%016VR{x23}\n"
                         "x24=%016VR{x24} x25=%016VR{x25} x26=%016VR{x26} x27=%016VR{x27}\n"
-                        "x28=%016VR{x28} x29=%016VR{x29} x30=%016VR{x30} x30=%016VR{x31}\n"
+                        "x28=%016VR{x28} x29=%016VR{x29} x30=%016VR{x30} x31=%016VR{x31}\n"
                         "pc=%016VR{pc}\n"
                         );
         char szInstr[256]; RT_ZERO(szInstr);
@@ -372,7 +370,10 @@ static void nemR3LnxLogState(PVMCC pVM, PVMCPUCC pVCpu)
  */
 DECLINLINE(void) nemR3LnxSetGReg(PVMCPU pVCpu, uint8_t uReg, bool f64BitReg, bool fSignExtend, uint64_t u64Val)
 {
-    AssertReturnVoid(uReg < 31);
+    AssertReturnVoid(uReg <= RISCV_REG_X31);
+
+    if (uReg == RISCV_REG_ZERO)
+        return;
 
     if (f64BitReg)
         pVCpu->cpum.GstCtx.aGRegs[uReg].x = fSignExtend ? (int64_t)u64Val : u64Val;
@@ -382,21 +383,9 @@ DECLINLINE(void) nemR3LnxSetGReg(PVMCPU pVCpu, uint8_t uReg, bool f64BitReg, boo
     /* Mark the register as not extern anymore. */
     switch (uReg)
     {
-        case 0:
-            pVCpu->cpum.GstCtx.fExtrn &= ~CPUMCTX_EXTRN_X0;
-            break;
-        case 1:
-            pVCpu->cpum.GstCtx.fExtrn &= ~CPUMCTX_EXTRN_X1;
-            break;
-        case 2:
-            pVCpu->cpum.GstCtx.fExtrn &= ~CPUMCTX_EXTRN_X2;
-            break;
-        case 3:
-            pVCpu->cpum.GstCtx.fExtrn &= ~CPUMCTX_EXTRN_X3;
-            break;
         default:
-            AssertRelease(!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_X4_X28));
-            /** @todo We need to import all missing registers in order to clear this flag (or just set it in HV from here). */
+            AssertRelease(!(pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_GPRS_MASK));
+            /** @todo We need to import all missing registers in order to clear this flag (or just set it in KVM from here). */
     }
 }
 
@@ -483,7 +472,6 @@ static int nemHCLnxExportState(PVM pVM, PVMCPU pVCpu, PCPUMCTX pCtx)
     RT_NOREF(pVM);
 
     /** @todo optimize all of this! */
-
     if (   (pVCpu->cpum.GstCtx.fExtrn & (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_PC))
         !=                              (CPUMCTX_EXTRN_GPRS_MASK | CPUMCTX_EXTRN_PC))
     {
@@ -892,6 +880,41 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
         VMCPU_CMPXCHG_STATE(pVCpu, VMCPUSTATE_STARTED_EXEC_NEM, VMCPUSTATE_STARTED_EXEC_NEM_CANCELED);
         LogFlow(("NEM/%u: returning immediately because canceled\n", pVCpu->idCpu));
         return VINF_SUCCESS;
+    }
+
+    /*
+     * Enable getting breakpoint exception exits as soon as our debugger has one enabled.
+     */
+    if (pVM->nem.s.fSetGstDbg)
+    {
+        if (   pVCpu->CTX_SUFF(pVM)->dbgf.ro.cEnabledSwBreakpoints
+            && !pVM->nem.s.fGstDbg)
+        {
+            struct kvm_guest_debug GstDbg;
+            GstDbg.control = KVM_GUESTDBG_ENABLE;
+            GstDbg.pad     = 0;
+
+            int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_GUEST_DEBUG, &GstDbg);
+            if (rcLnx)
+            {
+                int rc = RTErrConvertFromErrno(errno);
+                AssertLogRelMsgFailedReturn(("KVM_SET_GUEST_DEBUG failed: KVM_SET_GUEST_DEBUG=%#x rcLnx=%d errno=%u rc=%Rrc\n", KVM_SET_GUEST_DEBUG, rcLnx, errno), rc);
+            }
+        }
+        else if (   !pVCpu->CTX_SUFF(pVM)->dbgf.ro.cEnabledSwBreakpoints
+                 && pVM->nem.s.fGstDbg)
+        {
+            struct kvm_guest_debug GstDbg;
+            GstDbg.control = 0;
+            GstDbg.pad     = 0;
+
+            int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_GUEST_DEBUG, &GstDbg);
+            if (rcLnx)
+            {
+                int rc = RTErrConvertFromErrno(errno);
+                AssertLogRelMsgFailedReturn(("KVM_SET_GUEST_DEBUG failed: rcLnx=%d errno=%u rc=%Rrc\n", rcLnx, errno), rc);
+            }
+        }
     }
 
     /*
