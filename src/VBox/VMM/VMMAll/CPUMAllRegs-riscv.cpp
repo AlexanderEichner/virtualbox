@@ -98,7 +98,6 @@ VMMDECL(uint64_t)   CPUMGetGuestFlatPC(PVMCPU pVCpu)
 VMMDECL(uint64_t)   CPUMGetGuestFlatSP(PVMCPU pVCpu)
 {
     CPUM_INT_ASSERT_NOT_EXTRN(pVCpu, CPUMCTX_EXTRN_SP);
-    AssertReleaseFailed(); /** @todo Exception level. */
     return pVCpu->cpum.s.Guest.aGRegs[RISCV_REG_SP].x;
 }
 
