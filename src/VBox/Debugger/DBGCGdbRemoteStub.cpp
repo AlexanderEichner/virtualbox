@@ -1159,6 +1159,47 @@ static const GDBREGDESC g_aGdbRegsArm64[] =
 };
 
 
+/**
+ * riscv64 GDB register set.
+ */
+static const GDBREGDESC g_aGdbRegsRiscV64[] =
+{
+    DBGREG_DESC_INIT_INT64(     "zero",   DBGFREG_RISCV_GREG_X0),
+    DBGREG_DESC_INIT_CODE_PTR64("ra",     DBGFREG_RISCV_GREG_X1),
+    DBGREG_DESC_INIT_DATA_PTR64("sp",     DBGFREG_RISCV_GREG_X2),
+    DBGREG_DESC_INIT_DATA_PTR64("gp",     DBGFREG_RISCV_GREG_X3),
+    DBGREG_DESC_INIT_DATA_PTR64("tp",     DBGFREG_RISCV_GREG_X4),
+    DBGREG_DESC_INIT_INT64(     "t0",     DBGFREG_RISCV_GREG_X5),
+    DBGREG_DESC_INIT_INT64(     "t1",     DBGFREG_RISCV_GREG_X6),
+    DBGREG_DESC_INIT_INT64(     "t2",     DBGFREG_RISCV_GREG_X7),
+    DBGREG_DESC_INIT_DATA_PTR64("fp",     DBGFREG_RISCV_GREG_X8),
+    DBGREG_DESC_INIT_INT64(     "s1",     DBGFREG_RISCV_GREG_X9),
+    DBGREG_DESC_INIT_INT64(     "a0",     DBGFREG_RISCV_GREG_X10),
+    DBGREG_DESC_INIT_INT64(     "a1",     DBGFREG_RISCV_GREG_X11),
+    DBGREG_DESC_INIT_INT64(     "a2",     DBGFREG_RISCV_GREG_X12),
+    DBGREG_DESC_INIT_INT64(     "a3",     DBGFREG_RISCV_GREG_X13),
+    DBGREG_DESC_INIT_INT64(     "a4",     DBGFREG_RISCV_GREG_X14),
+    DBGREG_DESC_INIT_INT64(     "a5",     DBGFREG_RISCV_GREG_X15),
+    DBGREG_DESC_INIT_INT64(     "a6",     DBGFREG_RISCV_GREG_X16),
+    DBGREG_DESC_INIT_INT64(     "a7",     DBGFREG_RISCV_GREG_X17),
+    DBGREG_DESC_INIT_INT64(     "s2",     DBGFREG_RISCV_GREG_X18),
+    DBGREG_DESC_INIT_INT64(     "s3",     DBGFREG_RISCV_GREG_X19),
+    DBGREG_DESC_INIT_INT64(     "s4",     DBGFREG_RISCV_GREG_X20),
+    DBGREG_DESC_INIT_INT64(     "s5",     DBGFREG_RISCV_GREG_X21),
+    DBGREG_DESC_INIT_INT64(     "s6",     DBGFREG_RISCV_GREG_X22),
+    DBGREG_DESC_INIT_INT64(     "s7",     DBGFREG_RISCV_GREG_X23),
+    DBGREG_DESC_INIT_INT64(     "s8",     DBGFREG_RISCV_GREG_X24),
+    DBGREG_DESC_INIT_INT64(     "s9",     DBGFREG_RISCV_GREG_X25),
+    DBGREG_DESC_INIT_INT64(     "s10",    DBGFREG_RISCV_GREG_X26),
+    DBGREG_DESC_INIT_INT64(     "s11",    DBGFREG_RISCV_GREG_X27),
+    DBGREG_DESC_INIT_INT64(     "t3",     DBGFREG_RISCV_GREG_X28),
+    DBGREG_DESC_INIT_INT64(     "t4",     DBGFREG_RISCV_GREG_X29),
+    DBGREG_DESC_INIT_INT64(     "t5",     DBGFREG_RISCV_GREG_X30),
+    DBGREG_DESC_INIT_INT64(     "t6",     DBGFREG_RISCV_GREG_X31),
+
+    DBGREG_DESC_INIT_CODE_PTR64("pc",     DBGFREG_RISCV_PC)
+};
+
 #undef DBGREG_DESC_INIT_CODE_PTR64
 #undef DBGREG_DESC_INIT_DATA_PTR64
 #undef DBGREG_DESC_INIT_CODE_PTR32
@@ -1195,6 +1236,11 @@ static int dbgcGdbStubCtxTgtXmlDescCreate(PGDBSTUBCTX pThis)
         "<target version=\"1.0\">\n"
         "    <architecture>aarch64</architecture>\n"
         "    <feature name=\"org.gnu.gdb.aarch64.core\">\n";
+    static const char s_szXmlTgtHdrRiscV64[] =
+        "<?xml version=\"1.0\"?>\n"
+        "<!DOCTYPE target SYSTEM \"gdb-target.dtd\">\n"
+        "<target version=\"1.0\">\n"
+        "    <feature name=\"org.gnu.gdb.riscv.cpu\">\n";
     static const char s_szXmlTgtFooter[] =
         "    </feature>\n"
         "</target>\n";
@@ -1215,6 +1261,8 @@ static int dbgcGdbStubCtxTgtXmlDescCreate(PGDBSTUBCTX pThis)
             pszHdr = &s_szXmlTgtHdrX86[0];
         else if (pThis->paRegs == &g_aGdbRegsArm64[0])
             pszHdr = &s_szXmlTgtHdrArm64[0];
+        else if (pThis->paRegs == &g_aGdbRegsRiscV64[0])
+            pszHdr = &s_szXmlTgtHdrRiscV64[0];
         else
             return VERR_INVALID_STATE;
 
@@ -2637,6 +2685,10 @@ static int dbgcGdbStubRun(PGDBSTUBCTX pThis)
         case CPUMMODE_ARMV8_AARCH64:
             pThis->paRegs = &g_aGdbRegsArm64[0];
             pThis->cRegs  = RT_ELEMENTS(g_aGdbRegsArm64);
+            break;
+        case CPUMMODE_RISCV_RV64:
+            pThis->paRegs = &g_aGdbRegsRiscV64[0];
+            pThis->cRegs  = RT_ELEMENTS(g_aGdbRegsRiscV64);
             break;
         case CPUMMODE_REAL:
         default:
