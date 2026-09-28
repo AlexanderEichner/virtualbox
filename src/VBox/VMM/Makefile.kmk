@@ -766,6 +766,7 @@ ifdef VBOX_WITH_VIRT_RISCV
  	VMMAll/PDMAllCritSect.cpp \
  	VMMAll/PDMAllCritSectRw.cpp \
  	VMMAll/PDMAllCritSectBoth.cpp \
+ 	VMMAll/target-riscv/PDMAllAia-riscv.cpp \
  	VMMAll/PDMAllQueue.cpp \
  	VMMAll/PDMAllTask.cpp \
  	VMMAll/PGMAll.cpp \

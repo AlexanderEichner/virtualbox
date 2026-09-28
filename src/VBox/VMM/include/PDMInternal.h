@@ -53,6 +53,9 @@
 #if defined(VBOX_VMM_TARGET_ARMV8) || defined(VBOX_VMM_TARGET_AGNOSTIC)
 # include <VBox/vmm/pdmgic.h>
 #endif
+#if defined(VBOX_VMM_TARGET_RISCV) || defined(VBOX_VMM_TARGET_AGNOSTIC)
+# include <VBox/vmm/pdmaia.h>
+#endif
 #include <VBox/sup.h>
 #include <VBox/msi.h>
 #include <iprt/assert.h>
@@ -827,6 +830,16 @@ typedef struct PDMICR3
             /** The APIC backend. */
             PDMGICBACKENDR3            GicBackend;
         } armv8;
+#endif
+#ifdef VBOX_VMM_TARGET_RISCV
+        struct
+        {
+            /** The type of AIA backend. */
+            PDMAIABACKENDTYPE          enmKind;
+            uint32_t                   uPadding;
+            /** The AIA backend. */
+            PDMAIABACKENDR3            AiaBackend;
+        } riscv;
 #endif
         uint8_t                        abPadding[256-8];
     } u;
@@ -1816,7 +1829,7 @@ extern const PDMPCIRAWHLPR3 g_pdmR3DevPciRawHlp;
 # define PDMDRV_ASSERT_DRVINS(pDrvIns)   do { } while (0)
 #endif
 
-#ifndef VBOX_VMM_TARGET_ARMV8
+#ifdef VBOX_VMM_TARGET_X86
 /** @def PDM_TO_APICBACKEND
  * Gets the APIC backend given the VM cross-context structure.
  */
@@ -1830,7 +1843,7 @@ extern const PDMPCIRAWHLPR3 g_pdmR3DevPciRawHlp;
 #  define PDM_TO_APICBACKEND(a_pVM)          (&((a_pVM)->pdmr0.s.Ic.u.x86.ApicBackend))
 #  define PDMCPU_TO_APICBACKEND(a_pVCpu)     (&((a_pVCpu)->CTX_SUFF(pVM)->pdmr0.s.Ic.u.x86.ApicBackend))
 # endif
-#else
+#elif defined(VBOX_VMM_TARGET_ARMV8)
 # ifdef IN_RING3
 #  define PDM_TO_GICBACKEND(a_pVM)           (&((a_pVM)->pdm.s.Ic.u.armv8.GicBackend))
 #  define PDMCPU_TO_GICBACKEND(a_pVCpu)      (&((a_pVCpu)->CTX_SUFF(pVM)->pdm.s.Ic.u.armv8.GicBackend))
@@ -1839,6 +1852,18 @@ extern const PDMPCIRAWHLPR3 g_pdmR3DevPciRawHlp;
 #   error "Implement me"
 #  endif
 # endif
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# ifdef IN_RING3
+#  define PDM_TO_AIABACKEND(a_pVM)           (&((a_pVM)->pdm.s.Ic.u.riscv.AiaBackend))
+#  define PDMCPU_TO_AIABACKEND(a_pVCpu)      (&((a_pVCpu)->CTX_SUFF(pVM)->pdm.s.Ic.u.riscv.AiaBackend))
+# else
+#  ifndef VBOX_WITH_MINIMAL_R0 /* hack for AllPdbTypeHack.cpp */
+#   error "Implement me"
+#  endif
+# endif
+#else
+/** @todo tstVMStructSize fails to build with this. */
+/*# error "Port me"*/
 #endif
 
 /*******************************************************************************
