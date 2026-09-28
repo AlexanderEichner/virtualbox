@@ -57,10 +57,12 @@ typedef enum PDMAIABACKENDTYPE
 {
     /** None/Invalid PDM AIA backend. */
     PDMAIABACKENDTYPE_NONE = 0,
-    /** VirtualBox backend. */
+    /** VirtualBox backend (APLIC + IMSIC). */
     PDMAIABACKENDTYPE_VBOX,
-    /** KVM backend. */
+    /** KVM backend (APLIC + IMSIC). */
     PDMAIABACKENDTYPE_KVM,
+    /** VirtualBox PLIC backend. */
+    PDMAIABACKENDTYPE_VBOX_PLIC,
     /** End of valid PDM AIA backend values. */
     PDMAIABACKENDTYPE_END,
     /** The usual 32-bit paranoia. */

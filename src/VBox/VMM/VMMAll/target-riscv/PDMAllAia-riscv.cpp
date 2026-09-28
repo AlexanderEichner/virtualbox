@@ -45,9 +45,10 @@ VMM_INT_DECL(const char *) PDMAiaGetBackendName(PDMAIABACKENDTYPE enmBackendType
 {
     switch (enmBackendType)
     {
-        case PDMAIABACKENDTYPE_NONE:   return "None";
-        case PDMAIABACKENDTYPE_VBOX:   return "VirtualBox";
-        case PDMAIABACKENDTYPE_KVM:    return "KVM";
+        case PDMAIABACKENDTYPE_NONE:        return "None";
+        case PDMAIABACKENDTYPE_VBOX:        return "VirtualBox";
+        case PDMAIABACKENDTYPE_VBOX_PLIC:   return "VirtualBox PLIC";
+        case PDMAIABACKENDTYPE_KVM:         return "KVM";
         default:
             break;
     }

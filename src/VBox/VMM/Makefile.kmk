@@ -753,6 +753,7 @@ ifdef VBOX_WITH_VIRT_RISCV
  	VMMR3/VMMR3GuruMeditation.cpp \
  	VMMR3/VMMR3Tests.cpp \
  	VMMR3/target-riscv/HMR3-riscv.cpp \
+ 	VMMR3/target-riscv/PLICR3-riscv.cpp \
  	VMMAll/CPUMAllRegs-riscv.cpp \
  	VMMAll/CPUMAllSysRegs-riscv.cpp \
  	VMMAll/DBGFAll.cpp \
@@ -799,7 +800,8 @@ ifdef VBOX_WITH_VIRT_RISCV
  VBoxVMMRiscv_SOURCES += VMMAll/IEMAllStub.cpp
 
  VBoxVMMRiscv_SOURCES.linux.riscv64 += \
- 	VMMR3/target-riscv/NEMR3Native-linux-riscv.cpp
+ 	VMMR3/target-riscv/NEMR3Native-linux-riscv.cpp \
+ 	VMMR3/target-riscv/AIAR3Nem-linux-riscv.cpp
  VBoxVMMRiscv_DEFS.linux.riscv64  += VBOX_WITH_NATIVE_NEM
 
  VBoxVMMRiscv_LIBS = \
