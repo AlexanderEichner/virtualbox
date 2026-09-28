@@ -155,6 +155,9 @@ VMMDECL(int) PDMIsaSetIrq(PVMCC pVM, uint8_t u8Irq, uint8_t u8Level, uint32_t uT
 #ifdef VBOX_VMM_TARGET_ARMV8
     int rc = VINF_SUCCESS;
     PDMGicSetSpi(pVM, u8Irq, u8Level == PDM_IRQ_LEVEL_HIGH ? true : false);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    int rc = VINF_SUCCESS;
+    PDMAiaSetExternal(pVM, u8Irq, u8Level == PDM_IRQ_LEVEL_HIGH ? true : false);
 #else
     int rc = VERR_PDM_NO_PIC_INSTANCE;
 /** @todo r=bird: This code is incorrect, as it ASSUMES the PIC and I/O APIC
@@ -212,6 +215,10 @@ VMM_INT_DECL(int) PDMIoApicSetIrq(PVM pVM, PCIBDF uBusDevFn, uint8_t u8Irq, uint
 #ifdef VBOX_VMM_TARGET_ARMV8
     RT_NOREF(uBusDevFn, uTagSrc);
     PDMGicSetSpi(pVM, u8Irq, u8Level == PDM_IRQ_LEVEL_HIGH ? true : false);
+    return VINF_SUCCESS;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    RT_NOREF(uBusDevFn, uTagSrc);
+    PDMAiaSetExternal(pVM, u8Irq, u8Level == PDM_IRQ_LEVEL_HIGH ? true : false);
     return VINF_SUCCESS;
 #else
     if (pVM->pdm.s.IoApic.CTX_SUFF(pDevIns))
@@ -284,6 +291,11 @@ VMM_INT_DECL(void) PDMIoApicSendMsi(PVMCC pVM, PCIBDF uBusDevFn, PCMSIMSG pMsi, 
     PCPDMGICBACKEND pGic = &pVM->pdm.s.Ic.u.armv8.GicBackend;
     if (pGic->pfnSendMsi)
         pGic->pfnSendMsi(pVM, uBusDevFn, pMsi, uTagSrc);
+#elif defined(VBOX_VMM_TARGET_RISCV)
+    NOREF(uBusDevFn);
+    PCPDMAIABACKEND pAia = &pVM->pdm.s.Ic.u.riscv.AiaBackend;
+    if (pAia->pfnSendMsi)
+        pAia->pfnSendMsi(pVM, uBusDevFn, pMsi, uTagSrc);
 #else
     PCPDMIOAPIC pIoApic = &pVM->pdm.s.IoApic;
 # ifdef IN_RING0
