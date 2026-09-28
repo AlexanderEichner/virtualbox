@@ -553,10 +553,13 @@ VMMR3_INT_DECL(bool) NEMR3CanExecuteGuest(PVM pVM, PVMCPU pVCpu)
 
 VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
 {
-    Assert(EMGetState(pVCpu) == EMSTATE_WAIT_SIPI);
-    /* Should never get here. */
-    AssertFailed(); RT_NOREF(pVM, pVCpu);
-    return VERR_NEM_IPE_3;
+    /*
+     * Force the vCPU to get out of the SIPI state and into the normal runloop
+     * as SBI including IPI is handled inside KVM.
+     */
+    RT_NOREF(pVM);
+    EMSetState(pVCpu, EMSTATE_HALTED);
+    return VINF_EM_RESCHEDULE;
 }
 
 
@@ -570,10 +573,8 @@ DECLHIDDEN(bool) nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEn
 DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
 {
     RT_NOREF(pVM);
-    /* We get PSCI events for managing the vCPU states. */
-    /** @todo r=aeichner Check how interrupt forwarding works with APs when it is currently halted
-     *                   and we use the in-kernel GIC. */
-    return false;
+    /** SBI including IPI is handled inside KVM. */
+    return true;
 }
 
 
@@ -763,7 +764,7 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
 {
     STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitTotal);
 
-    nemHCLnxImportState(pVCpu, UINT64_MAX, &pVCpu->cpum.GstCtx);
+    //nemHCLnxImportState(pVCpu, UINT64_MAX, &pVCpu->cpum.GstCtx);
 
 #ifdef LOG_ENABLED
     if (LogIs3Enabled())
