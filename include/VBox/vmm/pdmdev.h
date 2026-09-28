@@ -752,6 +752,13 @@ extern const PDMDEVREG g_DeviceAPICNem;
 extern const PDMDEVREG g_DeviceGIC;
 /** The PDM GIC NEM device registration structure. */
 extern const PDMDEVREG g_DeviceGICNem;
+#elif defined(VBOX_VMM_TARGET_RISCV)
+/** The PDM AIA device registration structure. */
+extern const PDMDEVREG g_DeviceAIA;
+/** The PDM AIA NEM device registration structure. */
+extern const PDMDEVREG g_DeviceAIANem;
+/** The PDM PLIC device registration structure. */
+extern const PDMDEVREG g_DevicePLIC;
 #endif
 
 /**

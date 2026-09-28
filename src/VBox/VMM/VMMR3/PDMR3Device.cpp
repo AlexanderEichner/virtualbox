@@ -38,6 +38,8 @@
 # include <VBox/vmm/pmu.h>
 #elif defined(VBOX_VMM_TARGET_X86)
 # include <VBox/vmm/pdmapic.h>
+#elif defined(VBOX_VMM_TARGET_RISCV)
+# include <VBox/vmm/pdmaia.h>
 #endif
 #include <VBox/vmm/cfgm.h>
 #include <VBox/vmm/dbgf.h>
@@ -734,8 +736,20 @@ static int pdmR3DevLoadModules(PVM pVM)
 #endif
 
 #ifdef VBOX_VMM_TARGET_RISCV
-    /** @todo Register APLIC */
+
+# if defined(VBOX_WITH_NATIVE_NEM) && !defined(IN_VMM_STATIC_UNIT_TESTS)
+    /* Register the internal VMM AIA device, NEM variant. */
+    int rc = pdmR3DevReg_Register(&RegCB.Core, &g_DeviceAIANem);
+    AssertRCReturn(rc, rc);
+
+    /* Register the internal VMM PLIC device. */
+    rc = pdmR3DevReg_Register(&RegCB.Core, &g_DevicePLIC);
+    AssertRCReturn(rc, rc);
+# else
     int rc;
+# endif
+
+
 #endif
 
     /*

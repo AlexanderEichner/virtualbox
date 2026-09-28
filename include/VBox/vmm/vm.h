@@ -322,10 +322,20 @@ typedef struct VMCPU
         } apic;
 #endif
 #if defined(VBOX_VMM_TARGET_RISCV) || defined(VBOX_VMM_TARGET_AGNOSTIC)
-        /** GIC part. */
+        /** AIA part. */
         union
         {
-            /** @todo */
+# ifdef VMM_INCLUDED_SRC_include_AIAInternal_h
+            struct AIACPU       s;
+# endif
+            uint8_t             padding[3840];      /* multiple of 64 */
+        } aia;
+        /** PLIC part. */
+        union
+        {
+# ifdef VMM_INCLUDED_SRC_include_PLICInternal_h
+            struct PLICCPU      s;
+# endif
             uint8_t             padding[3840];      /* multiple of 64 */
         } plic;
 #endif
@@ -514,6 +524,11 @@ AssertCompileSizeAlignment(VMCPU, 16384);
 # define VMCPU_FF_INTERRUPT_FIQ             RT_BIT_64(VMCPU_FF_INTERRUPT_FIQ_BIT)
 # define VMCPU_FF_INTERRUPT_FIQ_BIT         1
 #endif
+#if defined(VBOX_VMM_TARGET_RISCV) || defined(VBOX_VMM_TARGET_AGNOSTIC)
+/** This action forces the VM to inject an IRQ into the guest. */
+# define VMCPU_FF_INTERRUPT_IRQ             RT_BIT_64(VMCPU_FF_INTERRUPT_IRQ_BIT)
+# define VMCPU_FF_INTERRUPT_IRQ_BIT         0
+#endif
 #if defined(VBOX_VMM_TARGET_X86) || defined(VBOX_VMM_TARGET_AGNOSTIC)
 /** This action forces the VM to check any pending interrupts on the APIC. */
 # define VMCPU_FF_INTERRUPT_APIC            RT_BIT_64(VMCPU_FF_INTERRUPT_APIC_BIT)
@@ -662,8 +677,9 @@ AssertCompileSizeAlignment(VMCPU, 16384);
                                                  | VMCPU_FF_UNHALT      | VMCPU_FF_TIMER          | VMCPU_FF_DBGF \
                                                  | VMCPU_FF_INTERRUPT_NESTED_GUEST)
 # elif defined(VBOX_VMM_TARGET_RISCV)
-#  define VMCPU_FF_EXTERNAL_HALTED_MASK         (  VMCPU_FF_REQUEST       | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI \
-                                                 | VMCPU_FF_UNHALT        | VMCPU_FF_TIMER          | VMCPU_FF_DBGF) /** @todo Interrupts */
+#  define VMCPU_FF_EXTERNAL_HALTED_MASK         (  VMCPU_FF_INTERRUPT_IRQ \
+                                                 | VMCPU_FF_REQUEST       | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI \
+                                                 | VMCPU_FF_UNHALT        | VMCPU_FF_TIMER          | VMCPU_FF_DBGF)
 # endif
 #endif
 
@@ -683,8 +699,8 @@ AssertCompileSizeAlignment(VMCPU, 16384);
                                                  | VMCPU_FF_INTERRUPT_NESTED_GUEST | VMCPU_FF_VMX_MTF  | VMCPU_FF_VMX_APIC_WRITE \
                                                  | VMCPU_FF_VMX_PREEMPT_TIMER | VMCPU_FF_VMX_NMI_WINDOW | VMCPU_FF_VMX_INT_WINDOW )
 # elif defined(VBOX_VMM_TARGET_RISCV)
-#  define VMCPU_FF_HIGH_PRIORITY_PRE_MASK       (  VMCPU_FF_TIMER \
-                                                 | VMCPU_FF_DBGF) /** @todo Interrupts */
+#  define VMCPU_FF_HIGH_PRIORITY_PRE_MASK       (  VMCPU_FF_TIMER        | VMCPU_FF_INTERRUPT_IRQ \
+                                                 | VMCPU_FF_DBGF)
 # else
 #  error "Port me"
 # endif
@@ -1646,7 +1662,7 @@ typedef struct VM
 # ifdef VMM_INCLUDED_SRC_include_GICInternal_h
             struct GIC  s;
 # endif
-            uint8_t     padding[320];   /* multiple of 8 */
+            uint8_t     padding[4360];   /* multiple of 8 */
         } gic;
 #endif
 #if defined(VBOX_VMM_TARGET_X86) || defined(VBOX_VMM_TARGET_AGNOSTIC)
@@ -1659,15 +1675,25 @@ typedef struct VM
 # elif defined(VMM_INCLUDED_SRC_include_APICKvmInternal_h)
             struct KVMAPIC s;
 # endif
-            uint8_t     padding[320];   /* multiple of 8 */
+            uint8_t     padding[4360];   /* multiple of 8 */
         } apic;
 #endif
 #if defined(VBOX_VMM_TARGET_RISCV) || defined(VBOX_VMM_TARGET_AGNOSTIC)
         union
         {
-            /** @todo */
-            uint8_t     padding[320];   /* multiple of 8 */
-        } aplic;
+# ifdef VMM_INCLUDED_SRC_include_AIAInternal_h
+            struct AIA  s;
+# endif
+            uint8_t     padding[4360];   /* multiple of 8 */
+        } aia;
+
+        union
+        {
+# ifdef VMM_INCLUDED_SRC_include_PLICInternal_h
+            struct PLIC s;
+# endif
+            uint8_t     padding[4360];   /* multiple of 8 */
+        } plic;
 #endif
     };
 
@@ -1723,7 +1749,7 @@ typedef struct VM
     } gcm;
 
     /** Padding for aligning the structure size on a page boundrary. */
-    uint8_t         abAlignment2[0x3840 - sizeof(PVMCPUR3) * VMM_MAX_CPU_COUNT];
+    uint8_t         abAlignment2[0x2878 - sizeof(PVMCPUR3) * VMM_MAX_CPU_COUNT];
 
     /* ---- end small stuff ---- */
 
@@ -1733,7 +1759,7 @@ typedef struct VM
     /* This point is aligned on a 16384 boundrary (for arm64 purposes). */
 } VM;
 #ifndef VBOX_FOR_DTRACE_LIB
-//AssertCompileSizeAlignment(VM, 16384);
+AssertCompileSizeAlignment(VM, 16384);
 #endif
 
 
